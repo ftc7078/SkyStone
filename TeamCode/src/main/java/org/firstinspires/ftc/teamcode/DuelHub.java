@@ -3,6 +3,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -27,10 +28,13 @@ public class DuelHub extends LinearOpMode {
     private DcMotor leftManipulator = null;
     private DistanceSensor sensorRange;
     private double[] motor = new double[4];
+
     private final int FL=0;
     private final int FR=1;
     private final int BL =2;
     private final int BR =3;
+    private final double SLOW=0.6;
+
     private final double MSPEED=1.0;
     private double updates = 0;
     @Override
@@ -64,8 +68,8 @@ public class DuelHub extends LinearOpMode {
 
 
         // Reverse the motor that runs backwards when connected directly to the battery
-        leftFrontMotor.setDirection(DcMotor.Direction.REVERSE);
-        leftBackMotor.setDirection(DcMotor.Direction.FORWARD);
+        leftFrontMotor.setDirection(DcMotor.Direction.FORWARD);
+        leftBackMotor.setDirection(DcMotor.Direction.REVERSE);
         rightFrontMotor.setDirection(DcMotor.Direction.FORWARD);
         rightBackMotor.setDirection(DcMotor.Direction.REVERSE);
 
@@ -82,28 +86,9 @@ public class DuelHub extends LinearOpMode {
             // Setup a variable for each drive wheel to save power level for telemetry
 
             // Mecanum Mode uses left stick to go forward and turn.
-            boolean boost = gamepad1.a;
+            boolean boost = gamepad1.right_trigger>0.5;
 
             setMotors(gamepad1.left_stick_x,gamepad1.left_stick_y, gamepad1.right_stick_x, boost);
-/*            double r = Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y);
-            double robotAngle = Math.atan2(gamepad1.left_stick_y, gamepad1.left_stick_x) - Math.PI / 4;
-            double rightX = gamepad1.right_stick_x;
-            double v1 = r * Math.cos(robotAngle) + rightX;
-            double v2 = r * Math.sin(robotAngle) - rightX;
-            double v3 = r * Math.sin(robotAngle) + rightX;
-            double v4 = r * Math.cos(robotAngle) - rightX;*/
-            // Send calculated power to wheels
-            //v1=v1*v1;
-            //v2=v2*v2;
-            //v3=v3*v3;
-            //v4=v4*v4;
-/*
-
-
-            leftFrontMotor.setPower(v1);
-            leftBackMotor.setPower(v3);
-            rightFrontMotor.setPower(v2);
-            rightBackMotor.setPower(v4);*/
 
             boolean pull = gamepad1.x;
             boolean push = gamepad1.b;
@@ -130,11 +115,10 @@ public class DuelHub extends LinearOpMode {
             telemetry.addData("range", String.format(Locale.US,
                     "%.01f in", sensorRange.getDistance(DistanceUnit.INCH)));
             //telemetry.update();
-            //sleep(25);
-            updates++;
-            if ( (updates % 20) == 0){
-                telemetry.update();
-            }
+            sleep(1);
+
+            telemetry.update();
+
 
             telemetry.addData("Updates Per Second", "%.1f", updates/runtime.seconds() );
 
@@ -144,11 +128,16 @@ public class DuelHub extends LinearOpMode {
 
     void setMotors(double x, double y, double rot, boolean boost) {
             double theta = Math.atan2(x,y) - Math.PI/4;  //finds the angle of the joystick and turns it by pi/4 radians or 45 degrees
-            rot = .5*rot;  //scales rotation factor
+            rot = 1*rot;  //scales rotation factor
             double magnitude = Math.hypot(x,y);  //finds the magnitude of the joystick input by the Pythagorean theorem
-            telemetry.addData("Mag", "nX (%.2f)",magnitude);
-            magnitude = magnitude - rot; // subtracts rot from the magnitude to make room for it and scales the magnitude
+            telemetry.addData("Mag", "Mag (%.2f) Rot(%.2f)",magnitude, rot);
             if (magnitude > 1) {magnitude = 1;}
+
+            double div =  magnitude + Math.abs(rot);
+            if (div > 1) {
+                magnitude = magnitude / div;
+                rot = rot / div; // subtracts rot from the magnitude to make room for it and scales the magnitude
+            }
             double u = Math.cos(theta)*magnitude; //finds the input to one set of wheels
             double v = Math.sin(theta)*magnitude; //finds the input to the other set of wheels
 
@@ -171,15 +160,18 @@ public class DuelHub extends LinearOpMode {
             double newY = 0.5 * sqrt(termy1) - 0.5 * sqrt(termy2);
 
             //from here on is just setting motor values
-            motor[FR] = rot + newX;
-            motor[BL] = rot - newX;
-            motor[FL] = rot - newY;
-            motor[BR] = rot + newY;
+
+
+
+            motor[FR] =  newX + rot;
+            motor[BL] =  newX - rot;
+            motor[FL] =  newY + rot;
+            motor[BR] =  newY - rot;
             if (!boost) {
-                motor[FR] = motor[FR]*0.2;
-                motor[FL] = motor[FL]*0.2;
-                motor[BL] = motor[BL]*0.2;
-                motor[BR] = motor[BR]*0.2;
+                motor[FR] = motor[FR]*SLOW;
+                motor[FL] = motor[FL]*SLOW;
+                motor[BL] = motor[BL]*SLOW;
+                motor[BR] = motor[BR]*SLOW;
             }
             leftFrontMotor.setPower(motor[FL]);
             leftBackMotor.setPower(motor[BL]);
