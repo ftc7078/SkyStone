@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp(name="Mecanum Drive GTest", group="Iterative Opmode")
+@TeleOp(name="OpModeTest", group="Iterative Opmode")
 //@Disabled
 public class OpModeMTest extends OpMode {
     // Declare OpMode members.

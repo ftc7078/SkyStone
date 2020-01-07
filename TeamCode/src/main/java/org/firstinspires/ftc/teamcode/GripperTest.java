@@ -33,6 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
  * This OpMode scans a single servo back and forwards until Stop is pressed.
@@ -62,6 +63,9 @@ public class GripperTest extends LinearOpMode {
     Servo   rightServo;
     double  position = (MAX_POS - MIN_POS) / 2; // Start at halfway position
     boolean rampUp = true;
+    private double updates = 0;
+    private ElapsedTime runtime = new ElapsedTime();
+
 
 
     @Override
@@ -69,6 +73,7 @@ public class GripperTest extends LinearOpMode {
 
         // Connect to servo (Assume PushBot Left Hand)
         // Change the text in quotes to match any servo name on your robot.
+
         leftServo = hardwareMap.get(Servo.class, "left_servo");
         rightServo = hardwareMap.get(Servo.class, "right_servo");
 
@@ -78,7 +83,7 @@ public class GripperTest extends LinearOpMode {
         telemetry.update();
         waitForStart();
 
-
+        runtime.seconds();
         // Scan servo till stop pressed.
         while(opModeIsActive()){
 
@@ -99,6 +104,14 @@ public class GripperTest extends LinearOpMode {
                     rampUp = !rampUp;  // Switch ramp direction
                 }
             }
+            if (gamepad1.y)  {
+                position = 0;
+            } else {
+                position = 1;
+            }
+            leftServo.setPosition(position);                
+            rightServo.setPosition(1-position);
+
 
             // Display the current value
             telemetry.addData("Servo Position", "%5.2f", position);
@@ -106,12 +119,11 @@ public class GripperTest extends LinearOpMode {
             telemetry.update();
 
             // Set the servo to the new position and pause;
-            if (gamepad1.y)  {
-                leftServo.setPosition(0);
-            }
-           rightServo.setPosition(0);
+
             sleep(CYCLE_MS);
-            idle();
+            updates++;
+            telemetry.addData("Updates Per Second", "%.1f", updates/runtime.seconds() );
+
         }
 
         // Signal done;
