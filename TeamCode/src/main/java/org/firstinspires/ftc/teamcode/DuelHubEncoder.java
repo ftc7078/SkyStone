@@ -3,21 +3,24 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
-import static java.lang.Math.sqrt;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.Locale;
 
+import static java.lang.Math.sqrt;
 
-@TeleOp(name="DuelHub", group="Linear Opmode")
 
-public class DuelHub extends LinearOpMode {
+@TeleOp(name="EncoderMode", group="Linear Opmode")
+
+public class DuelHubEncoder extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftFrontMotor = null;
@@ -27,6 +30,12 @@ public class DuelHub extends LinearOpMode {
     private DcMotor rightManipulator = null;
     private DcMotor leftManipulator = null;
     private DistanceSensor sensorRange;
+
+    enum ManipulatorOptions {pull,push,idle};
+
+    ManipulatorOptions manipulatorCurrent;
+    ManipulatorOptions manipulatorSet;
+
     private double[] motor = new double[4];
 
     private final int FL=0;
@@ -54,16 +63,19 @@ public class DuelHub extends LinearOpMode {
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
         rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
 
-
+        DcMotor[] driveMotors = new DcMotor[4];
+        driveMotors[FL]=leftFrontMotor;
+        driveMotors[FR]=rightFrontMotor;
+        driveMotors[BL]=leftBackMotor;
+        driveMotors[BR]=rightBackMotor;
 
         // Set Power Levels to zero
-        leftFrontMotor.setPower(0);
-        leftBackMotor.setPower(0);
-        rightFrontMotor.setPower(0);
-        rightBackMotor.setPower(0);
+        for (int i = 0; i<4; i++) {
+            driveMotors[i].setPower(0);
+            driveMotors[i].setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
         leftManipulator.setPower(0);
         rightManipulator.setPower(0);
-
 
 
         // Reverse the motor that runs backwards when connected directly to the battery
@@ -85,35 +97,47 @@ public class DuelHub extends LinearOpMode {
             // Setup a variable for each drive wheel to save power level for telemetry
 
             // Mecanum Mode uses left stick to go forward and turn.
-            boolean boost = gamepad1.right_trigger>0.5;
+            boolean boost = gamepad1.right_trigger > 0.5;
 
-            setMotors(gamepad1.left_stick_x,gamepad1.left_stick_y, gamepad1.right_stick_x, boost);
+            setMotors(gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, boost);
 
-            boolean pull = gamepad1.x;
-            boolean push = gamepad1.b;
-            if (pull) {
-                leftManipulator.setPower(MSPEED);
-                rightManipulator.setPower(-MSPEED);
-                telemetry.addData("Manipulator Motors", "Pulling");
-            } else if (push) {
-                leftManipulator.setPower(-MSPEED);
-                rightManipulator.setPower(MSPEED);
-                telemetry.addData("Manipulator Motors", "Pushing");
+
+            if (gamepad1.x) {
+                manipulatorSet = ManipulatorOptions.pull;
+            } else if (gamepad1.b) {
+                manipulatorSet = ManipulatorOptions.push;
             } else {
-                telemetry.addData("Manipulator Motors", "Idle");
-                leftManipulator.setPower(0);
-                rightManipulator.setPower(0);
+                manipulatorSet = ManipulatorOptions.idle;
             }
 
+            if (manipulatorSet != manipulatorCurrent) {
+                switch (manipulatorSet) {
+                    case pull:
+                        leftManipulator.setPower(MSPEED);
+                        rightManipulator.setPower(-MSPEED);
+                        telemetry.addData("Manipulator Motors", "Pulling");
+                    case push:
+                        leftManipulator.setPower(-MSPEED);
+                        rightManipulator.setPower(MSPEED);
+                        telemetry.addData("Manipulator Motors", "Pushing");
+                    case idle:
+                        telemetry.addData("Manipulator Motors", "Idle");
+                        leftManipulator.setPower(0);
+                        rightManipulator.setPower(0);
+                }
+                manipulatorCurrent = manipulatorSet;
+            }
+
+
+
             // Show the elapsed game time and wheel power.
-            //telemetry.addData("Status", "Run Time: " + runtime.toString());
-            //telemetry.addData("Motors", "lf (%.2f), rf (%.2f), lb (%.2f), rb (%.2f)", v1, v2, v3, v4);
             telemetry.addData("Left/Right Stick", "LX (%.2f), LY (%.2f), RX (%.2f), RY (%.2f)", gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.right_stick_y);
 
-            //telemetry.update();
-            sleep(1);
+
             telemetry.addData("Updates Per Second", "%.1f", updates++/runtime.seconds() );
+
             telemetry.update();
+
 
         }
     }
