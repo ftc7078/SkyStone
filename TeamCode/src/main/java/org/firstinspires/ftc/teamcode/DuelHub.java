@@ -84,13 +84,13 @@ public class DuelHub extends LinearOpMode {
 
             // Setup a variable for each drive wheel to save power level for telemetry
 
-            // Mecanum Mode uses left stick to go forward and turn.
-            boolean boost = gamepad1.right_trigger>0.5;
+            // Mecanum Mode uses left stick to go forwardSpeed and turn.
+            boolean boost = gamepad1.left_trigger < 0.5;
 
             setMotors(gamepad1.left_stick_x,gamepad1.left_stick_y, gamepad1.right_stick_x, boost);
 
-            boolean pull = gamepad1.x;
-            boolean push = gamepad1.b;
+            boolean pull = gamepad2.x;
+            boolean push = gamepad2.b;
             if (pull) {
                 leftManipulator.setPower(MSPEED);
                 rightManipulator.setPower(-MSPEED);
@@ -105,12 +105,9 @@ public class DuelHub extends LinearOpMode {
                 rightManipulator.setPower(0);
             }
 
-            // Show the elapsed game time and wheel power.
-            //telemetry.addData("Status", "Run Time: " + runtime.toString());
-            //telemetry.addData("Motors", "lf (%.2f), rf (%.2f), lb (%.2f), rb (%.2f)", v1, v2, v3, v4);
+
             telemetry.addData("Left/Right Stick", "LX (%.2f), LY (%.2f), RX (%.2f), RY (%.2f)", gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.right_stick_y);
 
-            //telemetry.update();
             sleep(1);
             telemetry.addData("Updates Per Second", "%.1f", updates++/runtime.seconds() );
             telemetry.update();

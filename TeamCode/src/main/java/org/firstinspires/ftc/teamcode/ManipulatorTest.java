@@ -46,7 +46,7 @@ public class ManipulatorTest extends LinearOpMode {
 
             // Setup a variable for each drive wheel to save power level for telemetry
 
-            // Mecanum Mode uses left stick to go forward and turn.
+            // Mecanum Mode uses left stick to go forwardSpeed and turn.
             boolean pull = gamepad1.x;
             boolean push = gamepad1.b;
 
