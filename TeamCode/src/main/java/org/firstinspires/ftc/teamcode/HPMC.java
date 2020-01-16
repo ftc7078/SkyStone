@@ -24,10 +24,12 @@ public class HPMC {
     int historySize = 5;
 
     static long tickTime = 50; //in milliseconds
-
-
     //For Smart Ticks
-    private long nextWake = System.nanoTime() + tickTime * 1000000;
+    private long nextWake = 0;
+
+
+
+
     private int position = 0;
     private double desiredSpeed = 0;
     double currentSpeed = 0;
@@ -207,7 +209,9 @@ public class HPMC {
         smState = MoveState.ACCELERATING;
         double  distanceDecelerating = (smSpeed / 2 ) * (accelerationTicks * tickTime / 1000);
         smStartStopping = (long) (smDistance - Math.abs( distanceDecelerating) );
-        System.out.println(String.format("Distance:  %d  Stopping Distance %.2f   Start Slowing At:  %d", smDistance, distanceDecelerating, smStartStopping));
+        if (label != null) {
+            System.out.println(String.format("Setting Up M: %s  Distance: %d Power: %.2f  AT: %d D: %s Stopping Distance %.2f   Start Slowing At:  %d", label, smDistance, power, accelerationTicks, direction.toString(), distanceDecelerating, smStartStopping));
+        }
         if (smStartStopping > (smDistance / 2) ) {
             smStartStopping = (long) (smDistance / 2);
         }
@@ -234,7 +238,9 @@ public class HPMC {
                 if (smAccelerationTick >= smAccelerationTicks) {
                     smState=MoveState.AT_SPEED;
                 }
-                System.out.println(String.format("PS: %.2f DS: %.2f  CS: %.2f", percentSpeed, desiredSpeed, currentSpeed));
+                if (label != null) {
+                    System.out.println(String.format("M: %s ACC PS: %.2f DS: %.2f  CS: %.2f", label, percentSpeed, desiredSpeed, currentSpeed));
+                }
 
                 autoAdjust(true);
                 return (true);
@@ -249,6 +255,9 @@ public class HPMC {
                     smAccelerationTick = 0;
                     smState = MoveState.SLOWING;
                 }
+                if (label != null) {
+                    System.out.println(String.format("M: %s A_S PS: %.2f DS: %.2f  CS: %.2f", label, desiredSpeed, currentSpeed));
+                }
                 return (true);
             case SLOWING:
                 smAccelerationTick++;
@@ -257,6 +266,9 @@ public class HPMC {
                 if (smAccelerationTick >= smAccelerationTicks) {
                     smState = MoveState.DONE;
                     desiredSpeed = 0;
+                }
+                if (label != null) {
+                    System.out.println(String.format("M: %s SLO PS: %.2f DS: %.2f  CS: %.2f", label, desiredSpeed, currentSpeed));
                 }
                 autoAdjust(true);
                 return (true);
@@ -288,4 +300,28 @@ public class HPMC {
 
 
 
+
+    public void tickSleep() {
+        long now = System.nanoTime();
+        nextWake = nextWake + tickTime * 1000000;
+        if (nextWake < now) {
+            nextWake = now + tickTime * 1000000;
+            double msLate = (now - nextWake) / 1000000;
+            if (msLate > 100) {
+                System.out.println(String.format("Either this is the first tick or something is wrong: %.1f ms late", msLate));
+                throw new RuntimeException(String.format("Can't keep up: tick took %.1f ms too long", msLate));
+            }
+            return;
+        }
+        long sleepTime = (int) Math.floor((nextWake - now) / 1000000);
+        if (false) {//for debugging
+            System.out.println("Sleeping: " + sleepTime);
+        }
+
+        try {
+            Thread.sleep(sleepTime);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 }
