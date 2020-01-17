@@ -5,6 +5,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static java.lang.Math.sqrt;
@@ -26,6 +27,7 @@ public class TeleopMecanum extends LinearOpMode {
     private final double SLOW=0.4;
     private final double MAX_SPEED=2800;
     private MecanumDrive mecanumDrive = new MecanumDrive();
+    Servo capstone;
 
     @Override
     public void runOpMode() {
@@ -37,6 +39,7 @@ public class TeleopMecanum extends LinearOpMode {
 
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
         rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
+        capstone = hardwareMap.get(Servo.class, "capstone");
 
 
         leftManipulator.setPower(0);
@@ -53,7 +56,7 @@ public class TeleopMecanum extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-
+            capstone.setPosition(.5);
             // Setup a variable for each drive wheel to save power level for telemetry
 
             // Mecanum Mode uses left stick to go forwardSpeed and turn.
@@ -84,12 +87,17 @@ public class TeleopMecanum extends LinearOpMode {
                 leftManipulator.setPower(0);
                 rightManipulator.setPower(0);
             }
-
+            if (gamepad2.y) {
+                capstone.setPosition(1);
+            }else {
+                capstone.setPosition(.5);
+            }
             mecanumDrive.tickSleep();
             telemetry.addData("Left/Right Stick", "LX (%.2f), LY (%.2f), RX (%.2f), RY (%.2f)", gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.right_stick_y);
 
             telemetry.update();
         }
+
     }
 
 }

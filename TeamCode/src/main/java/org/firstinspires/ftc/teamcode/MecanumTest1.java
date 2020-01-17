@@ -32,14 +32,15 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static java.lang.Math.sqrt;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Move Test", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Test 1", group ="Concept")
 
-public class SMTest extends LinearOpMode {
+public class MecanumTest1 extends LinearOpMode {
 
 
     private ElapsedTime runtime = new ElapsedTime();
@@ -75,21 +76,54 @@ public class SMTest extends LinearOpMode {
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
+        Servo capstone = hardwareMap.get(Servo.class, "capstone");
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
         runtime.reset();
 
         waitForStart();
+
+        /*
+        capstone.setPosition(1);
+        sleep(1000);
+        capstone.setPosition(0);
+        sleep(1000);
+        capstone.setPosition(1);
+        */
+
+
         System.out.println("Starting forward 24");
-        mecanumDrive.forward(24, 0.4);
-        sleep(3000);
-        System.out.println("Starting backward 24");
+        mecanumDrive.forward(24, 0.7);
+
+        sleep(500);
+
+        status("Starting backward 24");
         mecanumDrive.backward(24, 0.4);
-        sleep(3000);
-        telemetry.addData("Status" , "Starting right 90");
-        telemetry.update();
-        sleep(3000);
+        sleep(500);
+
+
+
+        status("Starting right 90");
+
+        mecanumDrive.rightTurn(90, 0.3);
+        sleep(500);
+
+        mecanumDrive.rightTurn(90, 0.2);
+        sleep(500);
+
+        mecanumDrive.rightTurn(90, 0.5);
+        sleep(500);
+
+        mecanumDrive.rightTurn(90, 0.4);
+        sleep(500);
+
+        mecanumDrive.leftTurn( 360, 0.8);
+        //mecanumDrive.leftTurn(360, 0.5);
+
+        sleep(1000);
+        /*
+        status("Starting right 90 2");
 
         mecanumDrive.rightTurn(90, 0.5);
         telemetry.addData("Status" , "Starting right 90");
@@ -97,22 +131,18 @@ public class SMTest extends LinearOpMode {
         sleep(3000);
 
         mecanumDrive.rightTurn(90, 0.5);
-        telemetry.addData("Status" , "Starting right 90");
-        telemetry.update();
-        sleep(3000);
-
-        mecanumDrive.rightTurn(90, 0.5);
-        telemetry.addData("Status" , "Starting right 90");
-        telemetry.update();
+        status("Starting right 90");
         sleep(3000);
 
         mecanumDrive.rightTurn(90, 0.5);
         System.out.println("Done");
-
-        telemetry.addData("Status", "Done");
-        telemetry.update();
+        */
+        status( "Done");
 
     }
-
+    void status(String string) {
+        telemetry.addData("Status", string);
+        telemetry.update();
+    }
 }
 

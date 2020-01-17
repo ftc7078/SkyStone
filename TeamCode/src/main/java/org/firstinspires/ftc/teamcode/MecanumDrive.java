@@ -15,14 +15,14 @@ public class MecanumDrive {
     private HPMC[] motors = new HPMC[4];
     private double[] power = new double[4];
     private final double MOTOR_SPEED = 2800;
-    private final long COUNT_PER_INCH = 60;
+    private final long COUNT_PER_INCH = 40;
     private final long COUNT_PER_INCH_STRAFING = 60;
-    private final long COUNT_PER_DEGREE = 13;
+    private final double COUNT_PER_DEGREE = 8.9;
 
 
     private final int FL = 0;
-    private final int FR = 1;
-    private final int BL = 2;
+    private final int FR = 2;
+    private final int BL = 1;
     private final int BR = 3;
     private Telemetry telemetry;
     private LinearOpMode opMode;
@@ -54,7 +54,7 @@ public class MecanumDrive {
             motor.setPower(0);
             motor.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motor.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
+            motor.setTickTime(tickTime);
         }
 
         motors[FL].setLabel("FL");
@@ -73,8 +73,7 @@ public class MecanumDrive {
 
 
     public void tickSetup() {
-        long now = System.nanoTime();
-        nextWake = now + tickTime * 1000000;
+        nextWake = System.nanoTime();
     }
 
     public void tickSleep() {
@@ -90,7 +89,7 @@ public class MecanumDrive {
             return;
         }
         long sleepTime = (int) Math.floor((nextWake - now) / 1000000);
-        if (false) {//for debugging
+        if (true) {//for debugging
             System.out.println("Sleeping: " + sleepTime);
         }
 
@@ -171,17 +170,17 @@ public class MecanumDrive {
         telemetry.addData("Motors", "lf (%.2f), rf (%.2f), lb (%.2f), rb (%.2f)", power[FL], power[FR], power[BL], power[BR]);
     }
 
-    void forward(double distance, double power) {
-        move(distance, power, MoveDirection.FORWARD);
+    void forward(double inches, double power) {
+        move(inches, power, MoveDirection.FORWARD);
     }
-    void backward(double distance, double power) {
-        move(distance, power, MoveDirection.BACKWARD);
+    void backward(double inches, double power) {
+        move(inches, power, MoveDirection.BACKWARD);
     }
-    void leftStrafe (double distance, double power) {
-        move(distance, power, MoveDirection.LEFT);
+    void leftStrafe (double inches, double power) {
+        move(inches, power, MoveDirection.LEFT);
     }
-    void rightStrafe (double distance, double power) {
-        move(distance, power, MoveDirection.RIGHT);
+    void rightStrafe (double inches, double power) {
+        move(inches, power, MoveDirection.RIGHT);
     }
     void leftTurn(double degrees, double power) {
         turn(degrees, power, MoveDirection.LEFT);
@@ -191,26 +190,51 @@ public class MecanumDrive {
     }
 
 
+    void altTurn (double degrees, double power, MoveDirection direction) {
+        setMotors( 0 , 0 , -1, power);
+        long distance = (long) (degrees * COUNT_PER_DEGREE);
+        long start =  getCurrentPosition();
+        while (Math.abs(start - getCurrentPosition()) < distance) {
+            tickSleep();
+        }
+        setMotors(0,0,0,0);
 
+    }
 
     void turn(double degrees, double power, MoveDirection direction) {
-        long distance = (long) degrees * COUNT_PER_DEGREE;
+        long distance = (long) (degrees * COUNT_PER_DEGREE);
         HPMC.Direction FL_Direction = HPMC.Direction.FORWARD;
         HPMC.Direction FR_Direction = HPMC.Direction.FORWARD;
+        /*
+        for (HPMC motor : motors) {
+            motor.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        }
+        for (HPMC motor : motors) {
+            motor.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }*/
         switch (direction) {
 
             case LEFT:
                 FL_Direction = HPMC.Direction.REVERSE;
+                break;
             case RIGHT:
                 FR_Direction = HPMC.Direction.REVERSE;
+                break;
         }
+        double accelerationTicks = (power* 15.0)+2;
+
         for (int i : new int[]{FL, BL}) {
-            motors[i].smoothMoveSetup(distance, power, power * 5, FL_Direction, true);
+            motors[i].smoothMoveSetup(distance, power, accelerationTicks, accelerationTicks*1.5, FL_Direction, true);
         }
         for (int i : new int[]{FR, BR}) {
-            motors[i].smoothMoveSetup(distance, power, power * 5, FL_Direction, true);
+            motors[i].smoothMoveSetup(distance, power, accelerationTicks, accelerationTicks*1.5 , FR_Direction, true);
         }
         smTickUntilDone();
+
+    }
+
+    double calculateTicks( double power) {
+        return (power* power * 60);
     }
 
     void move(double inches, double power, MoveDirection direction) {
@@ -227,24 +251,24 @@ public class MecanumDrive {
                     motorDirection = HPMC.Direction.REVERSE;
                 }
                 for (HPMC motor : motors) {
-                    motor.smoothMoveSetup(distance, power, power * 10, motorDirection, true);
+                    motor.smoothMoveSetup(distance, power, power * 25+2, power * 35+2, motorDirection, true);
                 }
                 break;
             case LEFT:
             case RIGHT:
                 distance = (long) inches * COUNT_PER_INCH_STRAFING;
                 HPMC.Direction FL_Direction = HPMC.Direction.FORWARD;
-                HPMC.Direction FR_Direction = HPMC.Direction.REVERSE;
+                HPMC.Direction FR_Direction = HPMC.Direction.FORWARD;
                 if (direction == MoveDirection.LEFT) {
                     FL_Direction = HPMC.Direction.REVERSE;
                 } else {
                     FR_Direction = HPMC.Direction.REVERSE;
                 }
                 for (int i : new int[]{FL, BR}) {
-                    motors[i].smoothMoveSetup(distance, power, power * 5, FL_Direction, true);
+                    motors[i].smoothMoveSetup(distance, power, power * 10+2, power * 15+2, FL_Direction, true);
                 }
                 for (int i : new int[]{FR, BL}) {
-                    motors[i].smoothMoveSetup(distance, power, power * 5, FL_Direction, true);
+                    motors[i].smoothMoveSetup(distance, power, power * 10*2, power * 15+2, FR_Direction, true);
                 }
                 break;
         }
@@ -257,37 +281,26 @@ public class MecanumDrive {
         while (!done && opMode.opModeIsActive()) {
             done = true;
             for (HPMC motor : motors) {
-                //smTick returns true if we need to keep going, false if we're done moving
+                //smTick returns true if we are done, false if we need to keep going
                 //Keep going if any motor is not done
                 if (motor.smTick()) {
-                    done = true;
-                }
-            }
-            tickSleep();
-        }
-    }
+                    //System.out.println(String.format("Motor: %s not done", motor.label));
+                    done = false;
+                } else {
+                    //System.out.println(String.format("Motor: %s done", motor.label));
 
-    void forward_old(double distance, double speed, int accelerationTicks) {
-        HPMC.Direction direction = HPMC.Direction.FORWARD;
-        if (distance < 0) {
-            distance = Math.abs(distance);
-            direction = HPMC.Direction.REVERSE;
-        }
-        for (HPMC motor : motors) {
-            motor.smoothMoveSetup(distance, speed, accelerationTicks, direction, true);
-        }
-        boolean notDone = true;
-        while (notDone && opMode.opModeIsActive()) {
-            notDone = false;
-            for (HPMC motor : motors) {
-                //Returns true if we need to keep going, false if we're done moving
-                //Keep going if any motor is not done
-                if (motor.smTick()) {
-                    notDone = true;
                 }
             }
+            System.out.println("Done: " + done);
             tickSleep();
+
         }
+        //one last tick while stopped to settle things out
+        for (HPMC motor : motors) {
+            motor.updateCurrentSpeed();
+        }
+        tickSleep();
+
 
     }
 }

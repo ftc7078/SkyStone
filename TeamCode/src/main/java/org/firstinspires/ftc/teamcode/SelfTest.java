@@ -189,7 +189,7 @@ public class SelfTest extends LinearOpMode {
                 direction = HPMC.Direction.REVERSE;
             }
             for (HPMC motor : motors) {
-                motor.smoothMoveSetup(distance, speed, accelerationTicks, direction, true);
+                motor.smoothMoveSetup(distance, speed, accelerationTicks, accelerationTicks, direction, true);
             }
             boolean notDone = true;
             while (notDone) {

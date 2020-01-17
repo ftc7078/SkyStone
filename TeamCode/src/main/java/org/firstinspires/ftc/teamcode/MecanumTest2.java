@@ -30,19 +30,34 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Test 2", group ="Concept")
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="HPMC Single Motor Test", group ="Concept")
-
-public class HPMCSingleMotorTest extends LinearOpMode {
+public class MecanumTest2 extends LinearOpMode {
 
 
     private ElapsedTime runtime = new ElapsedTime();
-    private HPMC motor = null;
+    private HPMC[] motors = new HPMC[4];
+    private HPMC rightManipulator = null;
+    private HPMC leftManipulator = null;
+    private DistanceSensor sensorRange;
+    private double[] power = new double[4];
+    private final double MOTOR_SPEED = 2800;
+    boolean simpleMode = true;
+
+    private final int FL = 0;
+    private final int FR = 1;
+    private final int BL = 2;
+    private final int BR = 3;
+    private final double SLOW = 0.6;
+
+    private final double MSPEED = 1.0;
     private double updates = 0;
+    MecanumDrive mecanumDrive = new MecanumDrive();
 
     @Override
     public void runOpMode() {
@@ -52,55 +67,72 @@ public class HPMCSingleMotorTest extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        motor = new HPMC(hardwareMap, "right_back", 2800);
 
-        // Set Power Levels to zero
-        motor.setPower(0);
-        motor.setLabel("Motor");
-
-
-        // Reverse the motor that runs backwards when connected directly to the battery
-        motor.setDirection(DcMotor.Direction.FORWARD);
+        mecanumDrive.init(hardwareMap, telemetry, this);
 
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
-        telemetry.update();
+        Servo capstone = hardwareMap.get(Servo.class, "capstone");
+
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
-
-
         runtime.reset();
 
-
         waitForStart();
-        telemetry.addData("Status", "Running");
-        telemetry.update();
+
+        /*
+        capstone.setPosition(1);
+        sleep(1000);
+        capstone.setPosition(0);
+        sleep(1000);
+        capstone.setPosition(1);
+        */
 
 
-        move(100, 0.5, 50, HPMC.Direction.FORWARD, true);
-        //move(100, 0.9, 20, HPMC.Direction.REVERSE, true);
+        mecanumDrive.forward(48, 0.7);
+        pause();
+        mecanumDrive.rightTurn(90, 0.5);
+        pause();
+        mecanumDrive.forward(24, 0.5);
+        pause();
+        mecanumDrive.rightTurn(90, 0.5);
+        pause();
+        mecanumDrive.forward(48, 0.7);
+        pause();
 
-        telemetry.addData("Status", "Stopped");
-        telemetry.update();
+        mecanumDrive.leftTurn(180, 0.7);
+        pause();
+
+        mecanumDrive.forward(48, 0.7);
+        pause();
+
+        mecanumDrive.leftTurn(265, 0.6);
+        pause();
+
+        mecanumDrive.backward(24, 0.5);
+        pause();
+
+        mecanumDrive.rightTurn(90, 0.5);
+        pause();
+
+        mecanumDrive.forward(48, 0.7);
+
+        pause();
+
+        mecanumDrive.leftTurn(180, 0.7);
+
+
+        status( "Done");
+
     }
 
-
-    void move(double distance, double power, long accelerationTicks,  HPMC.Direction direction, Boolean endStopped) {
-        System.out.println("Starting moving "+direction.toString());
-        motor.smoothMoveSetup(distance, power, accelerationTicks, accelerationTicks, direction, endStopped);
-
-        int tick = 0;
-        while (opModeIsActive() && motor.smTick() ) {
-            tick++;
-            motor.tickSleep();
-            telemetry.addData("Tick" , tick);
-            telemetry.addData("SMStatus", motor.getSMStatus() );
-            System.out.println(String.format("SMStatus: %s", motor.getSMStatus()));
-            telemetry.addData( "Update Speed: ", motor.getUpdatesPerSecond());
-            telemetry.update();
-        }
+    void pause() {
+        sleep(100);
+    }
+    void status(String string) {
+        telemetry.addData("Status", string);
+        telemetry.update();
     }
 }
-
 
