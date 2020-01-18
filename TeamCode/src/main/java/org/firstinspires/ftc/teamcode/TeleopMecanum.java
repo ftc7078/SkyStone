@@ -28,6 +28,8 @@ public class TeleopMecanum extends LinearOpMode {
     private final double MAX_SPEED=2800;
     private MecanumDrive mecanumDrive = new MecanumDrive();
     Servo capstone;
+    Servo foundationRight;
+    Servo foundationLeft;
 
     @Override
     public void runOpMode() {
@@ -40,7 +42,8 @@ public class TeleopMecanum extends LinearOpMode {
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
         rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
         capstone = hardwareMap.get(Servo.class, "capstone");
-
+        foundationRight = hardwareMap.get(Servo.class, "foundationRight");
+        foundationLeft = hardwareMap.get(Servo.class, "foundationLeft");
 
         leftManipulator.setPower(0);
         rightManipulator.setPower(0);
@@ -56,7 +59,7 @@ public class TeleopMecanum extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            capstone.setPosition(.5);
+            capstone.setPosition(gamepad2.left_trigger * .5 + .5);
             // Setup a variable for each drive wheel to save power level for telemetry
 
             // Mecanum Mode uses left stick to go forwardSpeed and turn.
@@ -87,11 +90,16 @@ public class TeleopMecanum extends LinearOpMode {
                 leftManipulator.setPower(0);
                 rightManipulator.setPower(0);
             }
-            if (gamepad2.y) {
-                capstone.setPosition(1);
+            if ( gamepad2.y){
+                foundationRight.setPosition(0.45);
+                foundationLeft.setPosition(0.55);
             }else {
-                capstone.setPosition(.5);
+                foundationRight.setPosition(0.65);
+                foundationLeft.setPosition(0.35);
             }
+
+            telemetry.addData("foundation right", foundationRight.getPosition());
+            telemetry.addData("foundation left", foundationLeft.getPosition());
             mecanumDrive.tickSleep();
             telemetry.addData("Left/Right Stick", "LX (%.2f), LY (%.2f), RX (%.2f), RY (%.2f)", gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.right_stick_y);
 
