@@ -46,7 +46,7 @@ public class RedBuild extends LinearOpMode {
 
     private Servo   foundationLeft;
     private Servo   foundationRight;
-
+    Servo capstone;
 
     @Override public void runOpMode() {
 
@@ -61,6 +61,7 @@ public class RedBuild extends LinearOpMode {
 
         foundationLeft = hardwareMap.get(Servo.class,"foundationLeft");
         foundationRight = hardwareMap.get(Servo.class,"foundationRight");
+        capstone = hardwareMap.get(Servo.class, "capstone");
 
 
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
@@ -82,7 +83,7 @@ public class RedBuild extends LinearOpMode {
         runtime.reset();
 
         waitForStart();
-
+        capstone.setPosition(.5);
         mecanumDrive.forward(12,.5);
         mecanumDrive.rightTurn(45, .5);
         mecanumDrive.forward(20, .5);
@@ -98,7 +99,9 @@ public class RedBuild extends LinearOpMode {
         mecanumDrive.backward(6, .5);
         mecanumDrive.leftTurn(180, .5);
         mecanumDrive.leftStrafe(24, .5);
-        mecanumDrive.forward(42,.5);
+        mecanumDrive.forward(36,.5);
+        capstone.setPosition(.1);
+        sleep(1500);
     }
 
     void foundationMover(boolean up ){
@@ -106,8 +109,8 @@ public class RedBuild extends LinearOpMode {
             foundationLeft.setPosition(.35);
             foundationRight.setPosition(.65);
         } else {
-            foundationLeft.setPosition(.55);
-            foundationRight.setPosition(.45);
+            foundationLeft.setPosition(.6);
+            foundationRight.setPosition(.4);
         }
     }
 

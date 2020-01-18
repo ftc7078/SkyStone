@@ -35,9 +35,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="RedLoad", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="BlueBridge", group ="Concept")
 
-public class RedLoad extends LinearOpMode {
+public class BlueBridge extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor rightManipulator = null;
@@ -47,6 +47,7 @@ public class RedLoad extends LinearOpMode {
     private Servo   foundationLeft;
     private Servo   foundationRight;
     Servo capstone;
+
 
     @Override public void runOpMode() {
 
@@ -58,15 +59,12 @@ public class RedLoad extends LinearOpMode {
         mecanumDrive.init(hardwareMap, telemetry, this);
 
 
-
-        foundationLeft = hardwareMap.get(Servo.class,"foundationLeft");
-        foundationRight = hardwareMap.get(Servo.class,"foundationRight");
+        foundationLeft = hardwareMap.get(Servo.class, "foundationLeft");
+        foundationRight = hardwareMap.get(Servo.class, "foundationRight");
         capstone = hardwareMap.get(Servo.class, "capstone");
-
 
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
         rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
-
 
 
         // Set Power Levels to zero
@@ -85,26 +83,9 @@ public class RedLoad extends LinearOpMode {
         waitForStart();
 
         capstone.setPosition(.5);
-        //Scan blocks to decide wich block(should be 3 cases)
-        mecanumDrive.forward(24,.5);//to pick up the blocks
-        //run colector until sensor is triggered
-        mecanumDrive.rightTurn(120, .5);
-        leftManipulator.setPower(1);
-        rightManipulator.setPower(-1);
-        mecanumDrive.backward(24, .5);
-        leftManipulator.setPower(0);
-        rightManipulator.setPower(0);
-        mecanumDrive.forward(24, .5);
-        mecanumDrive.leftTurn(30, .5);
-        mecanumDrive.forward(52, .5);
-        mecanumDrive.rightTurn(180, .5);
-        leftManipulator.setPower(1);
-        rightManipulator.setPower(-1);
-        sleep(500);
-        leftManipulator.setPower(0);
-        rightManipulator.setPower(0);
-        mecanumDrive.forward(12, .5);
-        capstone.setPosition(0.1);
+        sleep(24000);
+        mecanumDrive.forward(48, .5);
+        capstone.setPosition(.1);
         sleep(1500);
     }
 }

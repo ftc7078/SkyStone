@@ -46,7 +46,7 @@ public class BlueLoad extends LinearOpMode {
 
     private Servo   foundationLeft;
     private Servo   foundationRight;
-
+    Servo capstone;
 
     @Override public void runOpMode() {
 
@@ -61,6 +61,7 @@ public class BlueLoad extends LinearOpMode {
 
         foundationLeft = hardwareMap.get(Servo.class,"foundationLeft");
         foundationRight = hardwareMap.get(Servo.class,"foundationRight");
+        capstone = hardwareMap.get(Servo.class, "capstone");
 
 
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
@@ -83,7 +84,7 @@ public class BlueLoad extends LinearOpMode {
 
         waitForStart();
 
-
+        capstone.setPosition(.5);
         //Scan blocks to decide wich block(should be 3 cases)
         mecanumDrive.forward(24,.5);//to pick up the blocks
         //run colector until sensor is triggered
@@ -103,5 +104,7 @@ public class BlueLoad extends LinearOpMode {
         leftManipulator.setPower(0);
         rightManipulator.setPower(0);
         mecanumDrive.forward(12, .5);
+        capstone.setPosition(.1);
+        sleep(1500);
     }
 }

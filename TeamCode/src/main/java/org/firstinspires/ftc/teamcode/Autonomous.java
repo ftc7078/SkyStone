@@ -48,6 +48,7 @@ public class Autonomous extends LinearOpMode {
 
     private Servo   foundationLeft;
     private Servo   foundationRight;
+    Servo capstone;
 
 
     @Override public void runOpMode() {
@@ -60,14 +61,13 @@ public class Autonomous extends LinearOpMode {
         mecanumDrive.init(hardwareMap, telemetry, this);
 
 
-
-        foundationLeft = hardwareMap.get(Servo.class,"foundationLeft");
-        foundationRight = hardwareMap.get(Servo.class,"foundationRight");
+        foundationLeft = hardwareMap.get(Servo.class, "foundationLeft");
+        foundationRight = hardwareMap.get(Servo.class, "foundationRight");
+        capstone = hardwareMap.get(Servo.class, "capstone");
 
 
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
         rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
-
 
 
         // Set Power Levels to zero
@@ -84,59 +84,9 @@ public class Autonomous extends LinearOpMode {
         runtime.reset();
 
         waitForStart();
-
-        sleep(100000);
-        foward( 1, 0.4);
-    }
-    void blueLoad() {
-        //Scan blocks to decide wich block(should be 3 cases)
-        mecanumDrive.forward(36,.7);//to pick up the blocks
-        //run colector until sensor is triggered
-        mecanumDrive.backward(6, .7);
-        mecanumDrive.leftTurn(90, 1);
-        mecanumDrive.backward(72, .7);
-        //drop arm
-        foundationMover(false);
-
-        //drop off block
-        mecanumDrive.forward(24,.7);
-        mecanumDrive.leftTurn(30, .7);
-        //lift arm
-        foundationMover(true);
-
-        mecanumDrive.leftStrafe(18, 1);
-        mecanumDrive.leftTurn(60, 1);
-        mecanumDrive.forward(24,.7);
-    }
-
-    void blueBuild() {
-        mecanumDrive.backward(30,1);
-        foundationMover(false);
-        mecanumDrive.forward(24,.7);
-        mecanumDrive.leftTurn(30, 1);
-        foundationMover(true);
-        mecanumDrive.leftStrafe(18,1);
-        mecanumDrive.leftTurn(30, .5);
-        mecanumDrive.forward(24,.7);
-    }
-
-    void foundationMover(boolean up ){
-        if (up){
-            foundationLeft.setPosition(1);
-            foundationRight.setPosition(0);
-        } else {
-            foundationLeft.setPosition(0);
-            foundationRight.setPosition(1);
-        }
-    }
-
-    void foward(double distance, double speed){
-        int count_to_travel = (int) (distance * 10);
-        int start_position = mecanumDrive.getCurrentPosition();
-        int end_position = start_position + count_to_travel;
-        while ( mecanumDrive.getCurrentPosition() < end_position) {
-            mecanumDrive.setMotors(1,0,0,speed);
-            mecanumDrive.tickSleep();
-        }
+        capstone.setPosition(.5);
+        sleep(1000);
+        capstone.setPosition(0);
+        sleep(1000);
     }
 }
