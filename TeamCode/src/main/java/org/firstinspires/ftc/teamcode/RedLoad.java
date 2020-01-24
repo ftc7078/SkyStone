@@ -39,72 +39,45 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class RedLoad extends LinearOpMode {
 
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor rightManipulator = null;
-    private DcMotor leftManipulator = null;
     private MecanumDrive mecanumDrive = new MecanumDrive();
+    private AtlasRobot robot = new AtlasRobot();
 
-    private Servo   foundationLeft;
-    private Servo   foundationRight;
-    Servo capstone;
 
     @Override public void runOpMode() {
 
-        telemetry.addData("Status", "Initialized");
-        //test live UnsupportedOperationException
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
         mecanumDrive.init(hardwareMap, telemetry, this);
+        robot.init(hardwareMap, telemetry, this);
 
-
-
-        foundationLeft = hardwareMap.get(Servo.class,"foundationLeft");
-        foundationRight = hardwareMap.get(Servo.class,"foundationRight");
-        capstone = hardwareMap.get(Servo.class, "capstone");
-
-
-        leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
-        rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
-
-
-
-        // Set Power Levels to zero
-
-        leftManipulator.setPower(0);
-        rightManipulator.setPower(0);
-
-
-        // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
 
-        // Wait for the game to start (driver presses PLAY)
-        waitForStart();
-        runtime.reset();
-
         waitForStart();
 
-        capstone.setPosition(.5);
-        //Scan blocks to decide wich block(should be 3 cases)
-        mecanumDrive.forward(24,.5);//to pick up the blocks
+        robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
+
+        mecanumDrive.forward(24,.5);
+
+        //to pick up the blocks
         //run colector until sensor is triggered
         mecanumDrive.rightTurn(120, .5);
-        leftManipulator.setPower(1);
-        rightManipulator.setPower(-1);
+        robot.setManipulator(AtlasRobot.ManipulatorDireciton.IN);
+
         mecanumDrive.backward(24, .5);
-        leftManipulator.setPower(0);
-        rightManipulator.setPower(0);
+        robot.setManipulator(AtlasRobot.ManipulatorDireciton.STOP);
+
         mecanumDrive.forward(24, .5);
         mecanumDrive.leftTurn(30, .5);
         mecanumDrive.forward(52, .5);
         mecanumDrive.rightTurn(180, .5);
-        leftManipulator.setPower(1);
-        rightManipulator.setPower(-1);
+
+        robot.setManipulator(AtlasRobot.ManipulatorDireciton.OUT);
+
         sleep(500);
-        leftManipulator.setPower(0);
-        rightManipulator.setPower(0);
+        robot.setManipulator(AtlasRobot.ManipulatorDireciton.STOP);
+
         mecanumDrive.forward(12, .5);
-        capstone.setPosition(0.1);
+
+        robot.setCapstone(AtlasRobot.CapstonePosition.UP);
+
         sleep(1500);
     }
 }

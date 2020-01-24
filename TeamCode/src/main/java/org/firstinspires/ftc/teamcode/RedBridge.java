@@ -39,53 +39,23 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class RedBridge extends LinearOpMode {
 
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor rightManipulator = null;
-    private DcMotor leftManipulator = null;
+
     private MecanumDrive mecanumDrive = new MecanumDrive();
-
-    private Servo   foundationLeft;
-    private Servo   foundationRight;
-    Servo capstone;
-
+    private AtlasRobot robot = new AtlasRobot();
 
     @Override public void runOpMode() {
 
-        telemetry.addData("Status", "Initialized");
-        //test live UnsupportedOperationException
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
         mecanumDrive.init(hardwareMap, telemetry, this);
+        robot.init(hardwareMap, telemetry, this);
 
-
-        foundationLeft = hardwareMap.get(Servo.class, "foundationLeft");
-        foundationRight = hardwareMap.get(Servo.class, "foundationRight");
-        capstone = hardwareMap.get(Servo.class, "capstone");
-
-        leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
-        rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
-
-
-        // Set Power Levels to zero
-
-        leftManipulator.setPower(0);
-        rightManipulator.setPower(0);
-
-
-        // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
 
-        // Wait for the game to start (driver presses PLAY)
-        waitForStart();
-        runtime.reset();
-
         waitForStart();
 
-        capstone.setPosition(.5);
+        robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
         sleep(24000);
         mecanumDrive.forward(48, .5);
-        capstone.setPosition(.1);
+        robot.setCapstone(AtlasRobot.CapstonePosition.UP);
         sleep(1500);
     }
 }

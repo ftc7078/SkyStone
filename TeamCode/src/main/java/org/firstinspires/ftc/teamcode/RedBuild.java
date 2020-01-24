@@ -39,79 +39,34 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class RedBuild extends LinearOpMode {
 
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor rightManipulator = null;
-    private DcMotor leftManipulator = null;
     private MecanumDrive mecanumDrive = new MecanumDrive();
-
-    private Servo   foundationLeft;
-    private Servo   foundationRight;
-    Servo capstone;
+    private AtlasRobot robot = new AtlasRobot();
 
     @Override public void runOpMode() {
-
-        telemetry.addData("Status", "Initialized");
-        //test live UnsupportedOperationException
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
         mecanumDrive.init(hardwareMap, telemetry, this);
-
-
-
-        foundationLeft = hardwareMap.get(Servo.class,"foundationLeft");
-        foundationRight = hardwareMap.get(Servo.class,"foundationRight");
-        capstone = hardwareMap.get(Servo.class, "capstone");
-
-
-        leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
-        rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
-
-
-
-        // Set Power Levels to zero
-
-        leftManipulator.setPower(0);
-        rightManipulator.setPower(0);
-
-
-        // Tell the driver that initialization is complete.
+        robot.init(hardwareMap, telemetry, this);
         telemetry.addData("Status", "Initialized");
-
-        // Wait for the game to start (driver presses PLAY)
         waitForStart();
-        runtime.reset();
 
-        waitForStart();
-        capstone.setPosition(.5);
+        robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
         mecanumDrive.forward(12,.5);
         mecanumDrive.rightTurn(45, .5);
         mecanumDrive.forward(20, .5);
         mecanumDrive.leftTurn(45, .5);
         mecanumDrive.forward(6, .5);
-        foundationMover(false);
+
+        robot.foundationMover(false);
+
         sleep(2000);
         mecanumDrive.backward(36,.5);
         mecanumDrive.rightTurn(270, .5);
         mecanumDrive.forward(24, .5);
-        //mecanumDrive.rightStrafe(12, .5);
-        foundationMover(true);
+        robot.foundationMover(true);
         mecanumDrive.backward(6, .5);
         mecanumDrive.leftTurn(180, .5);
         mecanumDrive.leftStrafe(24, .5);
         mecanumDrive.forward(36,.5);
-        capstone.setPosition(.1);
+        robot.setCapstone(AtlasRobot.CapstonePosition.UP);
         sleep(1500);
     }
-
-    void foundationMover(boolean up ){
-        if (up){
-            foundationLeft.setPosition(.35);
-            foundationRight.setPosition(.65);
-        } else {
-            foundationLeft.setPosition(.6);
-            foundationRight.setPosition(.4);
-        }
-    }
-
 }
