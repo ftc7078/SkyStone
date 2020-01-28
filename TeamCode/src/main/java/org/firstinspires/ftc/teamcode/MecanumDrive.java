@@ -2,7 +2,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -169,19 +168,15 @@ public class MecanumDrive {
 
         telemetry.addData("Motors", "lf (%.2f), rf (%.2f), lb (%.2f), rb (%.2f)", power[FL], power[FR], power[BL], power[BR]);
     }
-
+    void forward(double inches, double power, boolean endStopped) { move(inches, power, MoveDirection.FORWARD, endStopped); }
     void forward(double inches, double power) {
-        move(inches, power, MoveDirection.FORWARD);
+        move(inches, power, MoveDirection.FORWARD, true);
     }
-    void backward(double inches, double power) {
-        move(inches, power, MoveDirection.BACKWARD);
-    }
+    void backward(double inches, double power) { move(inches, power, MoveDirection.BACKWARD, true); }
     void leftStrafe (double inches, double power) {
-        move(inches, power, MoveDirection.LEFT);
+        move(inches, power, MoveDirection.LEFT, true);
     }
-    void rightStrafe (double inches, double power) {
-        move(inches, power, MoveDirection.RIGHT);
-    }
+    void rightStrafe (double inches, double power) { move(inches, power, MoveDirection.RIGHT, true); }
     void leftTurn(double degrees, double power) {
         turn(degrees, power, MoveDirection.LEFT);
     }
@@ -229,7 +224,7 @@ public class MecanumDrive {
         for (int i : new int[]{FR, BR}) {
             motors[i].smoothMoveSetup(distance, power, accelerationTicks, accelerationTicks*1.5 , FR_Direction, true);
         }
-        smTickUntilDone();
+        smTickUntilAllDone();
 
     }
 
@@ -237,7 +232,7 @@ public class MecanumDrive {
         return (power* power * 60);
     }
 
-    void move(double inches, double power, MoveDirection direction) {
+    void move(double inches, double power, MoveDirection direction, boolean endStopped) {
         long distance = 0;
         if (inches < 0) {
             inches = Math.abs(inches);
@@ -251,7 +246,7 @@ public class MecanumDrive {
                     motorDirection = HPMC.Direction.REVERSE;
                 }
                 for (HPMC motor : motors) {
-                    motor.smoothMoveSetup(distance, power, power * 25+2, power * 35+2, motorDirection, true);
+                    motor.smoothMoveSetup(distance, power, power * 25+2, power * 35+2, motorDirection, endStopped);
                 }
                 break;
             case LEFT:
@@ -265,17 +260,21 @@ public class MecanumDrive {
                     FR_Direction = HPMC.Direction.REVERSE;
                 }
                 for (int i : new int[]{FL, BR}) {
-                    motors[i].smoothMoveSetup(distance, power, power * 10+2, power * 15+2, FL_Direction, true);
+                    motors[i].smoothMoveSetup(distance, power, power * 10+2, power * 15+2, FL_Direction, endStopped);
                 }
                 for (int i : new int[]{FR, BL}) {
-                    motors[i].smoothMoveSetup(distance, power, power * 10*2, power * 15+2, FR_Direction, true);
+                    motors[i].smoothMoveSetup(distance, power, power * 10*2, power * 15+2, FR_Direction, endStopped);
                 }
                 break;
         }
-        smTickUntilDone();
+        if (endStopped) {
+            smTickUntilAllDone();
+        } else {
+            smTickUntilAnyDone();
+        }
     }
 
-    void smTickUntilDone() {
+    void smTickUntilAllDone() {
         boolean done = false;
         tickSetup();
         while (!done && opMode.opModeIsActive()) {
@@ -291,7 +290,7 @@ public class MecanumDrive {
 
                 }
             }
-            System.out.println("Done: " + done);
+            //System.out.println("All Done: " + done);
             tickSleep();
 
         }
@@ -303,4 +302,120 @@ public class MecanumDrive {
 
 
     }
+
+    double mecanumTravelRatio(double angle, boolean towardsPerpendicular) {
+        //returns how much difference in speed/distance a 45 degree offset mecanum wheel will have vs going straight.
+        //If you know the distance and direction the wheel will be traveling, this will tell you the ratio of distance you need the motor to spin it vs going straight
+        //It can be over 1 when you are traveling in the direction perpendicular to the rollers.
+        //It can be 0, or less than 0 if you are traveling 45 degrees towards parallel to the rollers
+        if (towardsPerpendicular) {
+
+            return Math.sin(angle + Math.PI / 4) * (1.414);
+        } else {
+            return Math.sin(-angle + Math.PI / 4) * (1.414);
+
+        }
+    }
+    void arcMove( double radius, double degrees, double speed, MoveDirection direction, boolean pivotFront,  boolean endStopped) {
+        //wheels a b c and d.
+        final double wheelSpacingFrontToBack = 10;
+        final double wheelSpacingSideToSide = 14;
+        double a = 0;  //the wheel closest to the center of the ark
+        double b = 0;  //the wheel opposite a
+        double c = 0;  //the wheel diagnally oppostie a
+        double d = 0;  //the wheel in line with a (on the same side)
+        double[] distances = new double[4];
+        double[] speeds = new double[4];
+
+        a=radius;
+        b=radius+wheelSpacingSideToSide;
+
+        c=Math.hypot(radius+wheelSpacingSideToSide, wheelSpacingFrontToBack);
+        double cAngle = Math.atan2(wheelSpacingFrontToBack, wheelSpacingSideToSide + radius);
+        //adjust the distance to travel for the front wheel based on the angle of their travel
+        double ratio = mecanumTravelRatio(cAngle, true);
+        System.out.println(String.format( "Distance for C %.1f, Angle %.1f Ratio %.1f  Computed Distance: %.1f",c, Math.toDegrees(cAngle),ratio , c*ratio ));
+
+        c = c * mecanumTravelRatio(cAngle, true);
+        d=Math.hypot(radius, wheelSpacingFrontToBack);
+        double dAngle =  Math.atan2(wheelSpacingFrontToBack,  radius);
+        ratio = mecanumTravelRatio(dAngle, false);
+        System.out.println(String.format( "Distance for D %.1f, Angle %.1f Ratio %.1f  Computed Distance: %.1f",d, Math.toDegrees(dAngle),ratio , d*ratio ));
+
+        d = d * mecanumTravelRatio(Math.atan2(wheelSpacingFrontToBack, radius), false);
+
+
+
+        double arkDistanceMultiplyer = (2 * Math.PI * degrees * COUNT_PER_INCH) / 360;
+        if (pivotFront) {
+            switch (direction) {
+                case LEFT:
+                    distances[FL] = a;
+                    distances[FR] = b;
+                    distances[BL] = d;
+                    distances[BR] = c;
+                    break;
+                case RIGHT:
+                    distances[FL] = b;
+                    distances[FR] = a;
+                    distances[BL] = c;
+                    distances[BR] = d;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Have to turn left or right");
+            }
+        } else {
+            switch (direction) {
+                case LEFT:
+                    distances[FL] = d;
+                    distances[FR] = c;
+                    distances[BL] = a;
+                    distances[BR] = b;
+                    break;
+                case RIGHT:
+                    distances[FL] = c;
+                    distances[FR] = d;
+                    distances[BL] = b;
+                    distances[BR] = a;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Have to turn left or right");
+            }
+        }
+        double accelerationTicks = (speed* 15.0)+2;
+        for (int i  = 0 ; i < 4; i++) {
+            double thisWheelSpeed = Math.abs(speed * distances[i] / c);
+            if (Math.abs(thisWheelSpeed) < 0.1) {
+                System.out.println("Power low, ending stopped");
+                motors[i].smoothMoveSetup(distances[i] * arkDistanceMultiplyer, thisWheelSpeed, accelerationTicks, accelerationTicks * 1.5, HPMC.Direction.FORWARD, true);
+            } else {
+                System.out.println(String.format("Setting up %d.  Speed %.1f  Distance %.1f", i, thisWheelSpeed, distances[i]));
+                motors[i].smoothMoveSetup( distances[i] * arkDistanceMultiplyer, thisWheelSpeed, accelerationTicks, accelerationTicks * 1.5, HPMC.Direction.FORWARD, endStopped);
+            }
+        }
+        smTickUntilAllDone();
+    }
+
+
+
+
+    void smTickUntilAnyDone() {
+        boolean done = false;
+        tickSetup();
+        while (!done && opMode.opModeIsActive()) {
+            done = false;
+            for (HPMC motor : motors) {
+                if (!motor.smTick()) {
+                    done = true;
+                } else {
+                    //System.out.println(String.format("Motor: %s done", motor.label));
+                }
+            }
+            System.out.println("Any Done: " + done);
+            if (!done) {
+                tickSleep();
+            }
+        }
+    }
+
 }

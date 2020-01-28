@@ -30,52 +30,48 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="BlueLoad", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Test 3", group ="Tests")
 
-public class BlueLoad extends LinearOpMode {
-
+public class MecanumTest3 extends LinearOpMode {
 
     private MecanumDrive mecanumDrive = new MecanumDrive();
     private AtlasRobot robot = new AtlasRobot();
 
-
-
-    @Override public void runOpMode() {
+    @Override
+    public void runOpMode() {
 
         mecanumDrive.init(hardwareMap, telemetry, this);
         robot.init(hardwareMap, telemetry, this);
 
-        // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
 
         waitForStart();
 
-        robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
+        //mecanumDrive.backward(4, 0.5);
+        mecanumDrive.forward(12, 0.5, false);
+        mecanumDrive.forward(12, 0.3, false);
+        mecanumDrive.forward(12, 0.7, true);
+        mecanumDrive.backward(36, 0.7);
 
-        mecanumDrive.forward(24,.5);//to pick up the blocks
-
-        //run colector until sensor is triggered
-        mecanumDrive.leftTurn(120, .5);
-        robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
-
-        mecanumDrive.backward(24, .5);
-        robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
+        pause();
 
 
-        mecanumDrive.forward(24, .5);
-        mecanumDrive.rightTurn(30, .5);
-        mecanumDrive.forward(52, .5);
-        mecanumDrive.rightTurn(180, .5);
-        robot.setManipulator(AtlasRobot.ManipulatorDirection.OUT);
 
-        sleep(500);
+        status( "Done");
 
-        robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
+    }
 
-        mecanumDrive.forward(12, .5);
-        robot.setCapstone(AtlasRobot.CapstonePosition.UP);
-        sleep(1500);
+    void pause() {
+        sleep(100);
+    }
+    void status(String string) {
+        telemetry.addData("Status", string);
+        telemetry.update();
     }
 }
+

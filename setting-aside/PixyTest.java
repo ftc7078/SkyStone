@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchImpl;
 
 
-@Autonomous(name = "Pixy", group = "Sensor")
+@Autonomous(name = "Pixy", group = "Tests")
 public class PixyTest extends LinearOpMode {
     I2cDeviceSynch pixyReader;
     I2cAddr pixyAddress = I2cAddr.create7bit(0x54);

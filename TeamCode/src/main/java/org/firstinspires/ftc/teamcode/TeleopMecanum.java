@@ -4,50 +4,45 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import static java.lang.Math.sqrt;
 
 
 @TeleOp(name="Teleop Mecanum", group="Linear Opmode")
 
 public class TeleopMecanum extends LinearOpMode {
 
+    private AtlasRobot robot = new AtlasRobot();
     private ElapsedTime runtime = new ElapsedTime();
 
+    /*
     private DcMotor rightManipulator = null;
-    private DcMotor leftManipulator = null;
+    //private DcMotor leftManipulator = null;
     private final int FL=0;
     private final int FR=1;
     private final int BL =2;
     private final int BR =3;
-    private double mSpeed=1.0;
     private final double SLOW=0.4;
     private final double MAX_SPEED=2800;
-    private MecanumDrive mecanumDrive = new MecanumDrive();
     Servo capstone;
     Servo foundationRight;
     Servo foundationLeft;
     double capstonePosition=0;
+    private double mSpeed=1.0;
+
+     */
+
+    private MecanumDrive mecanumDrive = new MecanumDrive();
 
     @Override
     public void runOpMode() {
-        telemetry.addData("Status", "Initialized");
-
         mecanumDrive.init(hardwareMap, telemetry, this);
+        robot.init(hardwareMap, telemetry, this);
 
 
 
-        leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
-        rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
-        capstone = hardwareMap.get(Servo.class, "capstone");
-        foundationRight = hardwareMap.get(Servo.class, "foundationRight");
-        foundationLeft = hardwareMap.get(Servo.class, "foundationLeft");
-
-        leftManipulator.setPower(0);
-        rightManipulator.setPower(0);
+        //capstone = hardwareMap.get(Servo.class, "capstone");
+        //foundationRight = hardwareMap.get(Servo.class, "foundationRight");
+        //foundationLeft = hardwareMap.get(Servo.class, "foundationLeft");
 
 
 
@@ -66,52 +61,42 @@ public class TeleopMecanum extends LinearOpMode {
             // Mecanum Mode uses left stick to go forwardSpeed and turn.
 
             double speed = 1;
-             if ( gamepad1.left_trigger > 0.5 ) {
-                 speed = 0.6;
-             }
-             if ( gamepad1.right_trigger > 0.5) {
-                 speed = 0.3;
-             }
-            if (gamepad2.right_trigger > .5) {
-                mSpeed = .5;
-            } else {
-                mSpeed = 1;
-            }
+             //if ( gamepad1.left_trigger > 0.5 ) {
+             //    speed = 0.6;
+             //}
+             //if ( gamepad1.right_trigger > 0.5) {
+             //    speed = 0.3;
+             //}
+             speed = (gamepad1.right_trigger * 0.7) + 0.3;
+
             mecanumDrive.setMotors(gamepad1.left_stick_x,gamepad1.left_stick_y, gamepad1.right_stick_x, speed);
 
             boolean pull = gamepad2.b;
             boolean push = gamepad2.x;
-            capstonePosition = 0;
-            if (gamepad2.left_bumper) {
-                capstonePosition += .5;
+
+            if (gamepad2.left_bumper && gamepad2.right_bumper) {
+                robot.setCapstone(AtlasRobot.CapstonePosition.DOWN);
+            } else if (gamepad2.left_bumper || gamepad2.right_bumper) {
+                robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
+            } else {
+                robot.setCapstone(AtlasRobot.CapstonePosition.UP);
             }
-            if (gamepad2.right_bumper) {
-                capstonePosition += .5;
-            }
-            capstone.setPosition(capstonePosition);
             if (pull) {
-                leftManipulator.setPower(mSpeed);
-                rightManipulator.setPower(-mSpeed);
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
                 telemetry.addData("Manipulator Motors", "Pulling");
             } else if (push) {
-                leftManipulator.setPower(-mSpeed);
-                rightManipulator.setPower(mSpeed);
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.OUT);
                 telemetry.addData("Manipulator Motors", "Pushing");
             } else {
                 telemetry.addData("Manipulator Motors", "Idle");
-                leftManipulator.setPower(0);
-                rightManipulator.setPower(0);
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
             }
             if ( gamepad2.y){
-                foundationRight.setPosition(0.4);
-                foundationLeft.setPosition(0.6);
+                robot.foundationMover(false);
             }else {
-                foundationRight.setPosition(0.65);
-                foundationLeft.setPosition(0.35);
+                robot.foundationMover(true);
             }
 
-            telemetry.addData("foundation right", foundationRight.getPosition());
-            telemetry.addData("foundation left", foundationLeft.getPosition());
             mecanumDrive.tickSleep();
             telemetry.addData("Left/Right Stick", "LX (%.2f), LY (%.2f), RX (%.2f), RY (%.2f)", gamepad1.left_stick_x, gamepad1.left_stick_y, gamepad1.right_stick_x, gamepad1.right_stick_y);
 

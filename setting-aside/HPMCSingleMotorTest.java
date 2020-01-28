@@ -35,7 +35,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="HPMC Single Motor Test", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="HPMC Single Motor Test", group ="Tests")
 
 public class HPMCSingleMotorTest extends LinearOpMode {
 

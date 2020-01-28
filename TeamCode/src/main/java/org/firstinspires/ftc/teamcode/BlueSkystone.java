@@ -32,50 +32,63 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="BlueLoad", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="RedSkystone", group ="Concept")
 
-public class BlueLoad extends LinearOpMode {
-
+public class BlueSkystone extends LinearOpMode {
 
     private MecanumDrive mecanumDrive = new MecanumDrive();
     private AtlasRobot robot = new AtlasRobot();
 
 
-
     @Override public void runOpMode() {
+
 
         mecanumDrive.init(hardwareMap, telemetry, this);
         robot.init(hardwareMap, telemetry, this);
-
-        // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
 
         waitForStart();
 
+
         robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
-
-        mecanumDrive.forward(24,.5);//to pick up the blocks
-
-        //run colector until sensor is triggered
-        mecanumDrive.leftTurn(120, .5);
+        mecanumDrive.backward(24,.5);
+        mecanumDrive.rightTurn(45,.5);
         robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
-
-        mecanumDrive.backward(24, .5);
+        mecanumDrive.backward(12,.5);
         robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
-
-
+        mecanumDrive.leftTurn(90,.5);
+        mecanumDrive.forward(42,.5);
+        mecanumDrive.leftTurn(45,.5);
+        mecanumDrive.forward(24,.5);
+        mecanumDrive.leftTurn(90,.5);
+        mecanumDrive.forward(30,.5);
+        robot.foundationMover(false);
+        sleep(2000);
+        mecanumDrive.backward(36,.5);
+        mecanumDrive.leftTurn(270, .5);
         mecanumDrive.forward(24, .5);
-        mecanumDrive.rightTurn(30, .5);
-        mecanumDrive.forward(52, .5);
-        mecanumDrive.rightTurn(180, .5);
-        robot.setManipulator(AtlasRobot.ManipulatorDirection.OUT);
-
+        //mecanumDrive.rightStrafe(12, .5);
+        robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
         sleep(500);
-
         robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
-
-        mecanumDrive.forward(12, .5);
+        robot.foundationMover(true);
+        mecanumDrive.backward(6, .5);
+        mecanumDrive.leftStrafe(24, .5);
+        mecanumDrive.backward(60,.5);
+        mecanumDrive.rightTurn(45,.5);
+        mecanumDrive.backward(24,.5);
+        robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
+        mecanumDrive.backward(12,.5);
+        robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
+        mecanumDrive.forward(12,.5);
+        mecanumDrive.leftTurn(45,.5);
+        mecanumDrive.forward(108,.5);
+        robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
+        sleep(500);
+        robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
         robot.setCapstone(AtlasRobot.CapstonePosition.UP);
         sleep(1500);
     }
+
+
 }

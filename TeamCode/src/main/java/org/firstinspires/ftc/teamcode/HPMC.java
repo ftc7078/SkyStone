@@ -14,41 +14,46 @@ public class HPMC {
     static final double MAX_POWER_CHANGE = 2.0;
     static final long MS_PER_NS = 1000000;
 
+
     int historySize = 3;
     static long tickTime = 50; //in milliseconds
     //For Smart Ticks
     private long nextWake = 0;
-    private int position = 0;
-    private double desiredSpeed = 0;
-    double currentSpeed = 0;
+    private int currentPosition = 0;
+    private double desiredVelocity = 0;
+    double currentVelocity = 0;
     double power = 0;
     double accelleration = 0;
     float updatesPerSecond = 0;
-    double speedSoon = 0;
+    double velocitySoon = 0;
     double change = 0;
     double maxSpeed = 0;
-    long smAccelerationTick = 0;
+
     long lastUpdateTime = 0;
     DcMotor motor = null;
 
     //The name of the motor for debugging;
     String label = null;
 
-    public enum MoveState { ACCELERATING, AT_SPEED, SLOWING, DONE};
+    public enum MoveState { ACCELERATING, AT_SPEED, STOPPING, DONE};
     public enum Direction {FORWARD, REVERSE};
 
     //smooth move variables
     MoveState smState = MoveState.DONE;
-    long smStartPosition = 0;
-    double smStartSpeed = 0;
-    double smSpeed = 0;
-    long  smDistance = 0;
-    long smAccelerationTicks = 0;
-    long smDesiredMoved = 0;
-    long smStartStopping = 0;
-    long smDesiredPosition = 0;
-    long smDecelerationTicks = 0;
-    long smDecelerationTick = 0;
+    long smAccelerationTick;
+    long smStartPosition;
+    long smEndPosition;
+    double smStartSpeed;
+    double smVelocity;
+    long  smDistance;
+    long smAccelerationTicks;
+    long smDesiredProgress;
+    long smStartStopping;
+    long smDesiredPosition;
+    long smDecelerationTicks;
+    long smDecelerationTick;
+    boolean smEndStopped = true;
+
 
 
 
@@ -84,23 +89,23 @@ public class HPMC {
     }
 
     public void setSpeed(double newDesiredSpeed) {
-        desiredSpeed = newDesiredSpeed;
+        desiredVelocity = newDesiredSpeed;
         autoAdjust();
     }
 
     public void updateCurrentSpeed() {
-        position = motor.getCurrentPosition();
+        currentPosition = motor.getCurrentPosition();
         long nanotime = System.nanoTime();
         //Don't update if it's less than 10 ms since the last update
         if ( (nanotime - lastUpdateTime) <   (10 * MS_PER_NS) ) {
             debug("Skipping double update");
             return;
         } else if (nanotime - lastUpdateTime > (100* MS_PER_NS) ) {
-            debug("position and time lists are outdated.  Clearing: " + (nanotime-lastUpdateTime)/1000000.0);
+            debug("currentPosition and time lists are outdated.  Clearing: " + (nanotime-lastUpdateTime)/1000000.0);
             positionList.clear();
             timeList.clear();
         }
-        positionList.add(position);
+        positionList.add(currentPosition);
         timeList.add(nanotime);
         lastUpdateTime = nanotime;
         if (positionList.size() > historySize) {
@@ -109,7 +114,7 @@ public class HPMC {
         if (timeList.size() > historySize) {
             timeList.remove(0);
         }
-        //set currentSpeed to
+        //set currentVelocity to
         if (timeList.size() > 2) {
             int start = 0;
             int end = timeList.size() - 1;
@@ -122,7 +127,7 @@ public class HPMC {
             long oldElapsed = timeList.get(middle) - timeList.get(start);
             long newElapsed = timeList.get(end) - timeList.get(middle);
             if ((elapsed > 0) && (oldElapsed > 0) && (newElapsed > 0)) {
-                currentSpeed = distance * (NANOSECONDS_PER_SECOND / elapsed);
+                currentVelocity = distance * (NANOSECONDS_PER_SECOND / elapsed);
                 updatesPerSecond = (timeList.size() * (NANOSECONDS_PER_SECOND / elapsed));
                 double oldSpeed = oldDistance * (NANOSECONDS_PER_SECOND / oldElapsed);
                 double newSpeed = newDistance * (NANOSECONDS_PER_SECOND / newElapsed);
@@ -131,11 +136,11 @@ public class HPMC {
                 accelleration = (newSpeed - oldSpeed) / secondsElapsed;
             } else {
                 debug("Not enough history.  Using zeros");
-                currentSpeed = 0;
+                currentVelocity = 0;
                 accelleration = 0;
             }
         } else {
-            currentSpeed = 0;
+            currentVelocity = 0;
             accelleration=0;
         }
     }
@@ -145,8 +150,8 @@ public class HPMC {
         autoAdjust(false);
     }
 
-    public void manualAdjust(double speed) {
-        power = speed / maxSpeed;
+    public void manualAdjust(double velocity) {
+        power = velocity / maxSpeed;
         if (power > 1) power = 1;
         if (power < -1) power = -1;
         motor.setPower(power);
@@ -156,13 +161,13 @@ public class HPMC {
         if (!skipUpdateSpeed) {
             updateCurrentSpeed();
         }
-        speedSoon = currentSpeed + (accelleration * LOOK_AHEAD_TIME);
-        double difference =  desiredSpeed - speedSoon;
-        if ( Math.abs(desiredSpeed) < 1) {
+        velocitySoon = currentVelocity + (accelleration * LOOK_AHEAD_TIME);
+        double difference =  desiredVelocity - velocitySoon;
+        if ( Math.abs(desiredVelocity) < 1) {
             change = -power;
             //System.out.println(String.format("Change from zeroing: %.4f", change));
-        } else if ( (speedSoon /  desiredSpeed) > 1.01) {
-            change =  (power * (desiredSpeed / speedSoon)) - power;
+        } else if ( (velocitySoon / desiredVelocity) > 1.01) {
+            change =  (power * (desiredVelocity / velocitySoon)) - power;
             //System.out.println(String.format("Change from overspeed: %.4f", change));
         } else {
             change = FINE_POWER_SCALE * difference;
@@ -179,7 +184,7 @@ public class HPMC {
         }*/
 
         power = power + change;
-        //debug(String.format("Power: %.4f change: %.4f speedSoon: %.2f  desiredSpeed: %.2f diff: %.2f pos: %d", power, change, speedSoon, desiredSpeed, difference,position));
+        //debug(String.format("Power: %.4f change: %.4f velocitySoon: %.2f  desiredVelocity: %.2f diff: %.2f pos: %d", power, change, velocitySoon, desiredVelocity, difference,currentPosition));
         if (power > 1) power = 1;
         if (power < -1) power = -1;
         motor.setPower(power);
@@ -188,167 +193,201 @@ public class HPMC {
 
     public void smoothMoveSetup(double distance, double power, double accelerationTicks, double decelerationTicks, Direction direction, boolean endStopped) {
         updateCurrentSpeed();
-        smStartPosition = position;
-        smDistance = (long) Math.abs(distance);
-        if (direction == Direction.FORWARD) {
-            long endPosition = smStartPosition + smDistance;
-        } else {
-            long endPosition = smStartPosition - smDistance;
+        smStartPosition = currentPosition;
+
+        if (distance < 0) {
+            //reverse direction
+            switch (direction) {
+                case FORWARD:
+                    direction = Direction.REVERSE;
+                    break;
+                case REVERSE:
+                    direction = Direction.FORWARD;
+            }
         }
-        desiredSpeed = currentSpeed;
-        smStartSpeed = currentSpeed;
+
+        smDistance = (long) Math.abs(distance);
+
+        if (direction == Direction.FORWARD) {
+            smEndPosition = smStartPosition + smDistance;
+        } else {
+            smEndPosition = smStartPosition - smDistance;
+        }
+
+        desiredVelocity = currentVelocity;
+        smStartSpeed = currentVelocity;
         smAccelerationTicks = (long) accelerationTicks;
         smAccelerationTick = 0;
-        smDesiredMoved = 0;
-        smDesiredPosition = position;
+        smDesiredProgress = 0;
+        smDesiredPosition = currentPosition;
         smDecelerationTicks = (long) decelerationTicks;
         smDecelerationTick = 0;
+        smEndStopped = endStopped;
 
         if (smAccelerationTicks<1) { smAccelerationTicks = 1;}
         if (direction == Direction.FORWARD) {
-            smSpeed = power*maxSpeed;
+            smVelocity = power*maxSpeed;
         } else {
-            smSpeed = -power*maxSpeed;
+            smVelocity = -power*maxSpeed;
         }
+
         smState = MoveState.ACCELERATING;
-        double  distanceDecelerating = (smSpeed / 2 ) * ((accelerationTicks+1) * tickTime / 1000.0);
-        smStartStopping = (long) (smDistance - Math.abs( distanceDecelerating) );
-        debug(String.format("Setting Up SM:  Distance: %d Power: %.2f  AT: %d D: %s SD %.2f   Start Slowing At:  %d", smDistance, power, smAccelerationTicks, direction.toString(), distanceDecelerating, smStartStopping));
-        if (smStartStopping < (smDistance *0.4) ) {
-            smStartStopping = (long) (smDistance *0.4);
+        double  distanceDecelerating = (smVelocity / 2 ) * ((accelerationTicks+1) * tickTime / 1000.0);
+        if (endStopped) {
+            smStartStopping = (long) (smDistance - Math.abs(distanceDecelerating));
+            if (smStartStopping < (smDistance *0.4) ) {
+                smStartStopping = (long) (smDistance *0.4);
+            }
+        } else {
+            smStartStopping = smDistance;
         }
+        debug2(String.format("Setting Up SM:  Distance: %d Power: %.2f  AT: %d D: %s SD %.2f   Start Slowing At:  %d", smDistance, power, smAccelerationTicks, direction.toString(), distanceDecelerating, smStartStopping));
+
     }
 
 
     public boolean smTick() {
         double tickSeconds = tickTime / 1000.0;
         updateCurrentSpeed();
-        long moved = Math.abs(position - smStartPosition);
-        if ((moved > (smDistance-3) ) && (smState != MoveState.DONE)) {
-            debug(String.format("DONE  Moved: %d of %d", moved, smDistance));
-            stop();
+
+        if ((moved() > (smDistance-3) ) && (smState != MoveState.DONE)) {
+            debug2(String.format("DONE  Moved: %d of %d", moved(), smDistance));
+            stopIfEndingStopped();
             smState = MoveState.DONE;
             return(false);
         }
+        debug(String.format("Tick starting.  Moved %d of %d.  State: %s", moved(), smDistance, smState.toString() ));
         switch (smState) {
             case ACCELERATING:
                 smAccelerationTick++;
-                double percentSpeed = (smAccelerationTick) / (double) smAccelerationTicks;
+                double targetPercentSpeed = (smAccelerationTick) / (double) smAccelerationTicks;
+                double currentPercentVelocity = currentVelocity / smVelocity;
 
 
-                //Set the desiredSpeed to the start speed plus a fraction of the desired difference in speed.
-                if (false) { //new method
-                    percentSpeed = Math.sqrt(percentSpeed);  //hmm..mabye not right
-
-                    desiredSpeed = (long) (percentSpeed * smSpeed);
-                    smDesiredPosition += desiredSpeed * tickSeconds;
-                    smDesiredMoved += Math.abs(desiredSpeed * tickSeconds);
-                    //double nextDesiredPosition = smDesiredPosition + (desiredSpeed * tickSeconds);
-                    //desiredSpeed = (smDesiredPosition - position) / tickSeconds;
-                    //desiredSpeed = recoverLostSign(desiredSpeed, smSpeed);
-                    long behind = moved - smDesiredMoved;
-                    if (moved < smDesiredMoved - 10) {
-                        debug("FASTER:"+ behind);
-
-                        desiredSpeed = smSpeed * 1.1;
-                    } else if (moved > smDesiredMoved + 10) {
-                        debug("WoA THERE " + behind);
-                        desiredSpeed = 0.9 * smSpeed;
-                    } else {
-                        desiredSpeed = smSpeed;
-                    }
-                    manualAdjust(desiredSpeed);
-                    debug(String.format("Spd: (%.1f of %.1f) Moved: (%d of %d) Behind: %d", currentSpeed, desiredSpeed, moved, smDesiredMoved, smDesiredMoved - moved));
-                } else { //old better method
-                    if (smAccelerationTick == 1) {
-                        power = smSpeed / maxSpeed * 0.2;
-                    }
-                    double estimatedSpeed = (smAccelerationTick-1) / (double) smAccelerationTicks;
-                    //This is what we want to move, but we target faster because acceleration takes time.
-                    smDesiredMoved += Math.abs(estimatedSpeed* smSpeed * tickSeconds);
-
-                    percentSpeed = (smAccelerationTick + 1) / (double) smAccelerationTicks;
-                    percentSpeed = (percentSpeed * 0.8) + 0.2;  //start at 20% speed and ramp up from there
-                    desiredSpeed = ((smSpeed - smStartSpeed) * (percentSpeed)) + smStartSpeed;
-
-                    autoAdjust(true);
-
-                    debug(String.format("Spd: (%.1f of %.1f) Moved: %d  DesiredMoved:%d Behind: %d", currentSpeed, desiredSpeed, moved, smDesiredMoved, smDesiredMoved - moved));
-
+                if (smAccelerationTick == 1) {
+                    power = smVelocity / maxSpeed * 0.2;
+                } else if ((moved() > (smDistance / 3.0)) || (currentVelocity / smVelocity) > 0.9) {
+                    debug(String.format("Switching to AT_SPEED  (%d > %d / 3) or ( %.1f / %.1f) > 0.9", moved(), smDistance, currentVelocity, smVelocity));
+                    smState = MoveState.AT_SPEED;
                 }
-                if (moved > smStartStopping) {
-                    smState = MoveState.SLOWING;
+                if (currentPercentVelocity < -0.1) {
+                    debug(String.format("RRRRT.  Going the wrong way: %.1f", currentPercentVelocity));
+                    if ( Math.abs( (currentVelocity) / maxSpeed) < 0.1) {  //if greater than 10% speed, use brakes.
+                        motor.setPower(0);
+                        desiredVelocity=0;
+                        power=0;
+                    } else {
+                        desiredVelocity = smVelocity;
+                        autoAdjust();
+                    }
+
+                } else {
+                    double estimatedPercentSpeed = (smAccelerationTick - 1) / (double) smAccelerationTicks;
+                    //This is what we want to move, but we target faster because acceleration takes time.
+
+                    smDesiredProgress += movedPerTick(estimatedPercentSpeed * smVelocity);
+                    targetPercentSpeed = (smAccelerationTick + 1) / (double) smAccelerationTicks;
+                    targetPercentSpeed = (targetPercentSpeed * 0.8) + 0.2;  //start at 20% speed and ramp up from there
+                    desiredVelocity = ((smVelocity - smStartSpeed) * (targetPercentSpeed)) + smStartSpeed;
+                    autoAdjust(true);
+                }
+
+                debug(String.format("ACC Spd: %.1f%% (%.1f of %.1f) Moved: %d  DesiredMoved:%d Behind: %d  Pow:%.1f", currentPercentVelocity * 100.0, currentVelocity, desiredVelocity, moved(), smDesiredProgress, smDesiredProgress - moved(), power));
+
+
+                if (moved() > smStartStopping) {
+                    if (smEndStopped) {
+                        smState = MoveState.STOPPING;
+                    } else {
+                        smState = MoveState.DONE;
+                        return(false);
+                    }
                 } else if (smAccelerationTick >= smAccelerationTicks) {
                     smState = MoveState.AT_SPEED;
                 }
-                if (true) {
-                } else {
 
-                }
-                debug(String.format("ACC %%S: %.2f DS: %.2f  CS: %.2f Moved: %d(%d) of %d PWR:%.2f", percentSpeed, desiredSpeed, currentSpeed, moved, smDesiredMoved, smStartStopping, power));
+                //debug(String.format("ACC %.2f%% DS: %.2f  CS: %.2f Moved: %d(%d) of %d PWR:%.2f", targetPercentSpeed, desiredVelocity, currentVelocity, moved, smDesiredProgress, smStartStopping, power));
                 return (true);
             case AT_SPEED:
-                smDesiredPosition += smSpeed * tickSeconds;
-                smDesiredMoved += Math.abs(smSpeed * tickSeconds);
+                smDesiredPosition += distancePerTick(smVelocity);
+                smDesiredProgress += movedPerTick(smVelocity);
                 if (true) { //old
                     //Increase speed by 10% if this wheel is behind;
-                    long behind = moved - smDesiredMoved;
-                    if (moved < smDesiredMoved - 10) {
-                        debug("FASTER " + behind);
-                        desiredSpeed = smSpeed * 1.1;
-                    } else if (moved > smDesiredMoved + 10) {
-                        debug("WoA THERE " + behind);
-                        desiredSpeed = 0.9 * smSpeed;
+                    long ahead = smDesiredProgress - moved();
+                    if (ahead <  -10) {
+                        debug("FASTER " + ahead);
+                        desiredVelocity = smVelocity * 1.1;
+                    } else if (ahead > 10) {
+                        if (ahead > (Math.abs(smVelocity) * tickSeconds * 4)) {  //more than 4 ticks ahead and more than 10 encoder counts ahead
+                            long distanceLeft = smDistance - moved();
+                            long movementPerTick = movedPerTick(smVelocity);
+                            long ticksLeft = (smDistance - smDesiredProgress) / movementPerTick;
+                            if (ticksLeft > 1) {
+                                debug(String.format("FIXME: %d %d %d %d", distanceLeft, movementPerTick, smDistance, smDesiredProgress));
+                                desiredVelocity = recoverLostSign(distanceLeft / ticksLeft, smVelocity);
+                                debug(String.format("SLOW DOWN!  Left %d  TicksLeft %d  Desired Velocity %.1f", distanceLeft, ticksLeft, desiredVelocity));
+                            } else {
+                                debug("I should be done.  Why am I in this code");
+                                desiredVelocity=smVelocity;
+                            }
+                        } else {
+                            debug("WoA THERE " + ahead);
+                            desiredVelocity = 0.9 * smVelocity;
+                        }
                     } else {
-                        desiredSpeed = smSpeed;
+                        desiredVelocity = smVelocity;
                     }
                     autoAdjust(true);
                 } else {
-                    smDesiredPosition += smSpeed * tickSeconds;
-                    smDesiredMoved += Math.abs(smSpeed * tickSeconds);
-                    desiredSpeed = (smDesiredPosition - position) / tickSeconds;
-                    manualAdjust(desiredSpeed);
+                    smDesiredPosition += smVelocity * tickSeconds;
+                    smDesiredProgress += Math.abs(smVelocity * tickSeconds);
+                    desiredVelocity = (smDesiredPosition - currentPosition) / tickSeconds;
+                    manualAdjust(desiredVelocity);
                 }
-                if (moved > smStartStopping ) {
-                    smState = MoveState.SLOWING;
+                if (moved() > smStartStopping ) {
+                    if (smEndStopped) {
+                        smState = MoveState.STOPPING;
+                    } else {
+                        smState = MoveState.DONE;
+                        return(false);
+                    }
                 }
-                debug(String.format("A_S DS:%.2f  CS:%.2f Moved:%d of %d PWR:%.2f", desiredSpeed, currentSpeed, moved, smStartStopping, power));
+                debug(String.format("A_S DS:%.2f  CS:%.2f Moved:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, moved(), smStartStopping, power));
                 return(true);
-            case SLOWING:
+            case STOPPING:
                 double distanceDecelerating = smDistance - smStartStopping;
-                long stoppingDistanceLeft =  (smDistance - moved);
+                long stoppingDistanceLeft =  (smDistance - moved());
                 smDecelerationTick++;
                 long ticksLeft = smDecelerationTicks - smDecelerationTick;
                 if  (ticksLeft < 1) {
-                    stop();
+                    stopIfEndingStopped();
                     smState = MoveState.DONE;
                     return (false);
                 }
                 //double ratio = (0.7 * smDecelerationTick  / (double) smDecelerationTicks) + 0.1;
-                //desiredSpeed = (smSpeed  - (smSpeed * ratio));
+                //desiredVelocity = (smSpeed  - (smSpeed * ratio));
 
                 double percentLeft = ((stoppingDistanceLeft) / (double) distanceDecelerating);
                 double timeLeft = (ticksLeft * tickSeconds);
-                desiredSpeed =  (stoppingDistanceLeft / timeLeft * 2.2) + 50;
-                desiredSpeed = recoverLostSign(desiredSpeed, smSpeed);
+                desiredVelocity =  (stoppingDistanceLeft / timeLeft * 2.2) + 50;
+                desiredVelocity = recoverLostSign(desiredVelocity, smVelocity);
 
-                //estamated stopping speed is 500/50ms;
-                long minStoppingDistance = (long) (( currentSpeed / 300 ) * tickSeconds);
+                //estiamated braking speed change is 600/50ms;
+                long minStoppingDistance = (long) (( currentVelocity / 300 ) * tickSeconds);
 
                 if ( stoppingDistanceLeft  > minStoppingDistance ) {
 
                     autoAdjust(true);
-                    debug(String.format("SLO DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredSpeed, currentSpeed, stoppingDistanceLeft, ticksLeft, moved, smDistance, power));
+                    debug(String.format("SLO DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
                     return(true);
                 } else {
-                    stop();
-                    debug(String.format("BRK DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredSpeed, currentSpeed, stoppingDistanceLeft, ticksLeft, moved, smDistance, power));
+                    stopIfEndingStopped();
+                    debug(String.format("BRK DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
 
                     return (true);
                 }
             case DONE:
-                debug(String.format("DONE DSPD: %.2f  SPD: %.2f M:%d of %d PWR:%.2f", desiredSpeed, currentSpeed,  moved, smDistance, power));
-
+                debug(String.format("DONE DSPD: %.2f  SPD: %.2f M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity,  moved(), smDistance, power));
                 return(false);
         }
         return false;
@@ -361,30 +400,37 @@ public class HPMC {
         return number;
     }
 
-    void stop() {
-        power=0;
-        motor.setPower(0);
-        desiredSpeed = 0;
+    void stopIfEndingStopped() {
+        if (smEndStopped) {
+            power = 0;
+            motor.setPower(0);
+            desiredVelocity = 0;
+        }
     }
 
     public void setTickTime(long tickTimeIn) { tickTime = tickTimeIn;}
     public void setLabel(String string) { label = string;}
     public void setHistorySize(int size) { historySize = size;}
     public double getPower() { return power; }
-    public double getCurrentSpeed() { return currentSpeed; }
-    public double getDesiredSpeed() { return desiredSpeed;}
+    public double getCurrentVelocity() { return currentVelocity; }
+    public double getDesiredVelocity() { return desiredVelocity;}
     public double getAccelleration()  { return accelleration; }
-    public double getSpeedSoon()  { return speedSoon; }
+    public double getVelocitySoon()  { return velocitySoon; }
     public double getUpdatesPerSecond() { return updatesPerSecond;}
-    public int getCurrentPosition() { return position; }
+    public int getCurrentPosition() { return currentPosition; }
     public String getSMStatus() {
         return String.format("State: %s  Moved: %d Speed: %.2f  Desired: %.2f Power: %.2f StoppingAt: %d",
                 smState.toString(),
-                Math.abs(position - smStartPosition),
-                currentSpeed, desiredSpeed, power, smStartStopping);
+                Math.abs(currentPosition - smStartPosition),
+                currentVelocity, desiredVelocity, power, smStartStopping);
     }
 
     void debug(String string) {
+        if (label != null) {
+            System.out.println("M: " + label + " " + string);
+        }
+    }
+    void debug2(String string) {
         if (label != null) {
             System.out.println("M: " + label + " " + string);
         }
@@ -416,4 +462,32 @@ public class HPMC {
             Thread.currentThread().interrupt();
         }
     }
+
+    long moved() {
+        if (smEndPosition < smStartPosition) {
+            return(smStartPosition - currentPosition);
+        } else {
+            return(currentPosition - smStartPosition);
+
+        }
+    }
+
+    long distanceLeft() {
+        return smDistance - moved();
+    }
+
+    long distancePerTick(double velocity) {
+        return (long) (velocity * tickSeconds());
+    }
+    long movedPerTick(double velocity) {
+        return Math.abs(distancePerTick(velocity));
+    }
+
+    double tickSeconds() {
+        return (tickTime / 1000.0);
+    }
 }
+
+
+
+

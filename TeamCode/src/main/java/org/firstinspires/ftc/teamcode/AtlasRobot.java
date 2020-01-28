@@ -9,8 +9,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-import static java.lang.Math.sqrt;
-
 public class AtlasRobot {
 
     private Telemetry telemetry;
@@ -23,8 +21,9 @@ public class AtlasRobot {
     private Servo foundationLeft;
     private Servo foundationRight;
     Servo capstone;
+    Servo inRamp;
     enum CapstonePosition { UP, MIDDLE, DOWN};
-    enum ManipulatorDireciton { IN, OUT, STOP};
+    enum ManipulatorDirection { IN, OUT, STOP};
 
 
     public void init(HardwareMap hardwareMap, Telemetry telemetryIn, LinearOpMode opModeIn) {
@@ -35,7 +34,7 @@ public class AtlasRobot {
         foundationLeft = hardwareMap.get(Servo.class, "foundationLeft");
         foundationRight = hardwareMap.get(Servo.class, "foundationRight");
         capstone = hardwareMap.get(Servo.class, "capstone");
-
+        inRamp = hardwareMap.get(Servo.class, "in_ramp");
 
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
         rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
@@ -56,7 +55,7 @@ public class AtlasRobot {
                 capstone.setPosition(0.5);
                 break;
             case DOWN:
-                capstone.setPosition(1);
+                capstone.setPosition(0.62);
                 break;
         }
     }
@@ -71,19 +70,22 @@ public class AtlasRobot {
         }
     }
 
-    void setManipulator(ManipulatorDireciton direction) {
+    void setManipulator(ManipulatorDirection direction) {
         switch (direction) {
             case IN:
+                inRamp.setPosition(1);
                 leftManipulator.setPower(1);
                 rightManipulator.setPower(-1);
                 break;
             case OUT:
+                inRamp.setPosition(1);
                 leftManipulator.setPower(-1);
                 rightManipulator.setPower(1);
                 break;
             case STOP:
                 leftManipulator.setPower(0);
                 rightManipulator.setPower(0);
+                inRamp.setPosition(0);
                 break;
 
         }

@@ -35,7 +35,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Test Strafe", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Test Strafe", group ="Tests")
 
 public class MecanumTestStrafe extends LinearOpMode {
 

@@ -37,7 +37,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import static java.lang.Math.sqrt;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Self Test", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Self Test", group ="Tests")
 
 public class SelfTest extends LinearOpMode {
 

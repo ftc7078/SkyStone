@@ -38,7 +38,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import static java.lang.Math.sqrt;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Test 1", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Test 1", group ="Tests")
 
 public class MecanumTest1 extends LinearOpMode {
 
