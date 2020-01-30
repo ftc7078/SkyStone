@@ -22,9 +22,8 @@ public class AtlasRobot {
     private Servo foundationRight;
     Servo capstone;
     Servo inRamp;
-    enum CapstonePosition { UP, MIDDLE, DOWN};
-    enum ManipulatorDirection { IN, OUT, STOP};
-
+    enum CapstonePosition { UP, MIDDLE, DOWN}
+    enum ManipulatorDirection { IN, OUT, STOP}
 
     public void init(HardwareMap hardwareMap, Telemetry telemetryIn, LinearOpMode opModeIn) {
 
@@ -74,20 +73,19 @@ public class AtlasRobot {
         switch (direction) {
             case IN:
                 inRamp.setPosition(1);
-                leftManipulator.setPower(1);
-                rightManipulator.setPower(-1);
-                break;
-            case OUT:
-                inRamp.setPosition(1);
                 leftManipulator.setPower(-1);
                 rightManipulator.setPower(1);
+                break;
+            case OUT:
+                inRamp.setPosition(0);
+                leftManipulator.setPower(1);
+                rightManipulator.setPower(-1);
                 break;
             case STOP:
                 leftManipulator.setPower(0);
                 rightManipulator.setPower(0);
                 inRamp.setPosition(0);
                 break;
-
         }
     }
 }

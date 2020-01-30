@@ -68,8 +68,19 @@ public class TeleopMecanum extends LinearOpMode {
              //    speed = 0.3;
              //}
              speed = (gamepad1.right_trigger * 0.7) + 0.3;
+            double fwd = gamepad1.left_stick_y;
+            double strafe = gamepad1.left_stick_x;
+            double rot= gamepad1.right_stick_x;
 
-            mecanumDrive.setMotors(gamepad1.left_stick_x,gamepad1.left_stick_y, gamepad1.right_stick_x, speed);
+            fwd = fwd * speed;
+            strafe =strafe * speed * 2;
+            if (strafe > 1) {
+                strafe = 1;
+            } else if (strafe < -1) {
+                strafe = -1;
+            }
+            rot = rot * speed;
+            mecanumDrive.setMotors(strafe,fwd,rot, 1);
 
             boolean pull = gamepad2.b;
             boolean push = gamepad2.x;

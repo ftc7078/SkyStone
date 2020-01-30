@@ -171,6 +171,9 @@ public class HPMC {
             //System.out.println(String.format("Change from overspeed: %.4f", change));
         } else {
             change = FINE_POWER_SCALE * difference;
+            if (Math.abs(change) < 0.02) {
+                change = recoverLostSign(0.02, change);
+            }
             //System.out.println(String.format("Change from power scale: %.4f", change));
         }
 
@@ -272,16 +275,23 @@ public class HPMC {
                 }
                 if (currentPercentVelocity < -0.1) {
                     debug(String.format("RRRRT.  Going the wrong way: %.1f", currentPercentVelocity));
-                    if ( Math.abs( (currentVelocity) / maxSpeed) < 0.1) {  //if greater than 10% speed, use brakes.
+                    if (( Math.abs( (currentVelocity) / maxSpeed) < 0.1) && false) {  //if greater than 10% speed, use brakes.
                         motor.setPower(0);
                         desiredVelocity=0;
                         power=0;
                     } else {
                         desiredVelocity = smVelocity;
-                        autoAdjust();
+                        if (Math.abs (desiredVelocity) < maxSpeed / 5) {
+                            power = recoverLostSign(0.5, desiredVelocity);
+                            motor.setPower(power);
+                        } else {
+                            autoAdjust();
+                        }
                     }
 
                 } else {
+
+
                     double estimatedPercentSpeed = (smAccelerationTick - 1) / (double) smAccelerationTicks;
                     //This is what we want to move, but we target faster because acceleration takes time.
 

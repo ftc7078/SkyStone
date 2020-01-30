@@ -11,6 +11,12 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import static java.lang.Math.sqrt;
 
 public class MecanumDrive {
+
+    interface TickCallback {
+        // this can be any type of method
+        void tickCallback();
+    }
+
     private HPMC[] motors = new HPMC[4];
     private double[] power = new double[4];
     private final double MOTOR_SPEED = 2800;
@@ -34,6 +40,9 @@ public class MecanumDrive {
     //For Smart Ticks
     private long nextWake = 0;
     static long tickTime = 50; //in milliseconds
+    private TickCallback callback;
+
+
 
 
     public void init(HardwareMap hardwareMap, Telemetry telemetryIn, LinearOpMode opModeIn) {
@@ -71,11 +80,18 @@ public class MecanumDrive {
     }
 
 
+    void setupTickCallback( TickCallback callbackSet) {
+        callback = callbackSet;
+    }
+
     public void tickSetup() {
         nextWake = System.nanoTime();
     }
 
     public void tickSleep() {
+        if ( callback != null) {
+            callback.tickCallback();
+        }
         long now = System.nanoTime();
         nextWake = nextWake + tickTime * 1000000;
         if (nextWake < now) {
