@@ -171,6 +171,9 @@ public class HPMC {
             //System.out.println(String.format("Change from overspeed: %.4f", change));
         } else {
             change = FINE_POWER_SCALE * difference;
+            if (Math.abs(change) < 0.01) {
+                change = recoverLostSign(0.01, change);
+            }
             //System.out.println(String.format("Change from power scale: %.4f", change));
         }
 
