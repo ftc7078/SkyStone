@@ -39,7 +39,6 @@ public class TeleopMecanum extends LinearOpMode {
         robot.init(hardwareMap, telemetry, this);
 
 
-
         //capstone = hardwareMap.get(Servo.class, "capstone");
         //foundationRight = hardwareMap.get(Servo.class, "foundationRight");
         //foundationLeft = hardwareMap.get(Servo.class, "foundationLeft");

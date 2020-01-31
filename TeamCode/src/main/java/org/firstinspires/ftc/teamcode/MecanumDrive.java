@@ -306,6 +306,14 @@ public class MecanumDrive {
 
                 }
             }
+            String status = "";
+            status = status + " | FL: " + motors[FL].getMoveState();
+            status = status + " | FR: " + motors[FR].getMoveState();
+            status = status + " | BL: " + motors[BL].getMoveState();
+            status = status + " | BR: " + motors[BR].getMoveState();
+            System.out.println("Ticking Status" + status);
+
+
             //System.out.println("All Done: " + done);
             tickSleep();
 

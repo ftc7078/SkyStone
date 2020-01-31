@@ -51,9 +51,9 @@ public class MecanumArcTest extends LinearOpMode {
 
         //mecanumDrive.backward(4, 0.5);
         mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.RIGHT, false, true);
-        mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, false, true);
-        mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.RIGHT, true, true);
-        mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, true, true);
+        //mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, false, true);
+        //mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.RIGHT, true, true);
+       // mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, true, true);
 
 
 
