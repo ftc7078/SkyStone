@@ -53,11 +53,31 @@ public class TensorflowTest2 extends LinearOpMode {
         tf = new TensorflowDetector();
         tf.init(hardwareMap, telemetry, this);
 
+        while (!isStarted() ) {
+            telemetry.addData("path", tf.choosePath());
+            telemetry.update();
+            sleep(100);
+        }
+
 
         waitForStart();
+        int path = 0;
+        int loops = 0;
+        for (int i = 1; i<60; i++) {
+            path = tf.choosePath();
+            loops=i;
+            if (path > 0) {
+                break;
+            }
+            telemetry.addData("loop", i);
+            telemetry.update();
+            sleep(50);
+        }
+
         while (opModeIsActive()) {
-            int path = tf.choosePath();
-            telemetry.addData("Path chosen: %d", path);
+            telemetry.addData("loops needed", loops);
+
+            telemetry.addData("Path chosen:", path);
             tf.updateDetection();
             telemetry.update();
             sleep(100);

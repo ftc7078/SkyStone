@@ -34,24 +34,54 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Red Skystone", group ="Concept")
 
-public class RedSkystone extends LinearOpMode {
+public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallback {
 
     private MecanumDrive mecanumDrive = new MecanumDrive();
     private AtlasRobot robot = new AtlasRobot();
-
+    private TensorflowDetector tf;
     enum RedScan {LEFT, MIDDLE, RIGHT}
+    int updates;
 
     @Override
     public void runOpMode() {
+        tf = new TensorflowDetector();
+        tf.init(hardwareMap, telemetry, this);
 
+        while (!isStarted() ) {
+            telemetry.addData("path", tf.choosePath());
+            telemetry.update();
+            sleep(100);
+        }
 
         mecanumDrive.init(hardwareMap, telemetry, this);
         robot.init(hardwareMap, telemetry, this);
         telemetry.addData("Status", "Initialized");
+        mecanumDrive.setupTickCallback(this);
 
         waitForStart();
+        int path = 0;
+        int loops = 0;
+        for (int i = 1; i<60; i++) {
+            path = tf.choosePath();
+            loops=i;
+            if (path > 0) {
+                break;
+            }
+            telemetry.addData("loop", i);
+            telemetry.update();
+            sleep(50);
+        }
+        if (path==0) {
+            path = 1;
+        }
 
-        redScan(RedScan.RIGHT);
+        if (path == 1) {
+            redScan(RedScan.RIGHT);
+        }else if (path == 2) {
+            redScan(RedScan.MIDDLE);
+        }else if (path == 3) {
+            redScan(RedScan.LEFT);
+        }else {}
     }
 
     void redScan(RedScan output) {
@@ -59,7 +89,7 @@ public class RedSkystone extends LinearOpMode {
             case RIGHT:
                 robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
                 mecanumDrive.backward(22, 1);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN, true);
                 mecanumDrive.arcMove(8, -90,.5, MecanumDrive.MoveDirection.LEFT,false,true);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
                 mecanumDrive.leftStrafe(14,.5);
@@ -75,7 +105,7 @@ public class RedSkystone extends LinearOpMode {
                 mecanumDrive.leftStrafe(4,1);
                 mecanumDrive.backward(66,1);
                 mecanumDrive.leftStrafe(20,.5);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN, true);
                 mecanumDrive.backward(12,1);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
                 mecanumDrive.rightStrafe(20,1);
@@ -96,5 +126,14 @@ public class RedSkystone extends LinearOpMode {
 
         }
 
+    }
+
+    public void tickCallback() {
+        updates++;
+        if ( robot.switchPressed() ) {
+            robot.manipulatorAutostop();
+        }
+        telemetry.addData("I'm running callback code rightnow!", updates);
+        telemetry.update();
     }
 }

@@ -14,9 +14,9 @@ public class SwitchTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
        int updates=0;
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "switch");
+       digitalTouch = hardwareMap.get(DigitalChannel.class, "switch");
 
-        // set the digital channel to input.
+       // set the digital channel to input.
         digitalTouch.setMode(DigitalChannel.Mode.INPUT);
         waitForStart();
 

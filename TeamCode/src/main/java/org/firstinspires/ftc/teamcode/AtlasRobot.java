@@ -2,8 +2,11 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.widget.Switch;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -14,14 +17,18 @@ public class AtlasRobot {
     private Telemetry telemetry;
     private LinearOpMode opMode;
 
+
     enum MoveDirection {FORWARD, BACKWARD, LEFT, RIGHT}
 
     private DcMotor rightManipulator = null;
     private DcMotor leftManipulator = null;
     private Servo foundationLeft;
     private Servo foundationRight;
+    public ManipulatorDirection manipulatorState;
+    public boolean manipulatorAutostop = false;
     Servo capstone;
     Servo inRamp;
+    DigitalChannel digitalTouch;
     enum CapstonePosition { UP, MIDDLE, DOWN}
     enum ManipulatorDirection { IN, OUT, STOP}
 
@@ -38,8 +45,12 @@ public class AtlasRobot {
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
         rightManipulator = hardwareMap.get(DcMotor.class, "right_manipulator");
 
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "switch");
+
         leftManipulator.setPower(0);
         rightManipulator.setPower(0);
+
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         // Reverse the motors that runs backwards when connected directly to the battery
 
@@ -70,6 +81,12 @@ public class AtlasRobot {
     }
 
     void setManipulator(ManipulatorDirection direction) {
+        setManipulator(direction, false);
+    }
+
+    void setManipulator(ManipulatorDirection direction, boolean autoStop) {
+        manipulatorAutostop = autoStop;
+        manipulatorState=direction;
         switch (direction) {
             case IN:
                 inRamp.setPosition(1);
@@ -88,4 +105,15 @@ public class AtlasRobot {
                 break;
         }
     }
+
+    void manipulatorAutostop() {
+        if (manipulatorAutostop && (manipulatorState != ManipulatorDirection.STOP)) {
+            setManipulator(ManipulatorDirection.STOP);
+        }
+    }
+
+    boolean switchPressed() {
+        return !digitalTouch.getState();
+    }
+
 }

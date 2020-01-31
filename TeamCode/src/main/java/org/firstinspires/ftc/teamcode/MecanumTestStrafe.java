@@ -39,7 +39,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class MecanumTestStrafe extends LinearOpMode {
 
-
     private ElapsedTime runtime = new ElapsedTime();
     private HPMC[] motors = new HPMC[4];
     private HPMC rightManipulator = null;
