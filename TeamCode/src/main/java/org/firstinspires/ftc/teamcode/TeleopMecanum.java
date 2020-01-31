@@ -102,7 +102,7 @@ public class TeleopMecanum extends LinearOpMode {
                 telemetry.addData("Manipulator Motors", "Idle");
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
             }
-            if ( gamepad2.y){
+            if ( gamepad2.y || gamepad1.right_bumper){
                 robot.foundationMover(false);
             }else {
                 robot.foundationMover(true);
