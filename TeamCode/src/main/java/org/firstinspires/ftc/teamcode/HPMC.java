@@ -83,13 +83,21 @@ public class HPMC {
         this.maxSpeed = maxSpeed;
     }
 
+
+    public void setPowerSmart(double powerFactor) {
+        if (powerFactor > 1) powerFactor = 1;
+        if (powerFactor < -1) powerFactor = -1;
+        desiredVelocity = maxSpeed * powerFactor;
+        autoAdjust();
+    }
+
     public void setPower(double powerIn) {
         power = powerIn;
         motor.setPower(power);
     }
 
-    public void setSpeed(double newDesiredSpeed) {
-        desiredVelocity = newDesiredSpeed;
+    public void setDesiredVelocity(double newDesiredVelocity) {
+        desiredVelocity = newDesiredVelocity;
         autoAdjust();
     }
 
@@ -164,7 +172,8 @@ public class HPMC {
         velocitySoon = currentVelocity + (accelleration * LOOK_AHEAD_TIME);
         double difference =  desiredVelocity - velocitySoon;
         if ( Math.abs(desiredVelocity) < 1) {
-            change = -power;
+            power = 0;
+            change = 0;
             //System.out.println(String.format("Change from zeroing: %.4f", change));
         } else if ( (velocitySoon / desiredVelocity) > 1.01) {
             change =  (power * (desiredVelocity / velocitySoon)) - power;
@@ -411,6 +420,18 @@ public class HPMC {
                 }
             case DONE:
                 debug(String.format("DONE DSPD: %.2f  SPD: %.2f M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity,  moved(), smDistance, power));
+                if (smEndStopped) {
+                    if (Math.abs(moved() - smDistance) > 5) {
+                        //drifting.  Move back
+                        desiredVelocity =  ((smEndPosition - currentPosition) / tickSeconds);
+                        debug(String.format("DRIFTING!  GO BACK!  %.1f", desiredVelocity));
+                        autoAdjust();
+                    } else if (power != 0 ) {
+                        debug(String.format("Back home.  Stopping.", desiredVelocity));
+
+                        stopIfEndingStopped();
+                    }
+                }
                 return(false);
         }
         return false;

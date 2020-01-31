@@ -8,11 +8,16 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import static java.lang.Math.sqrt;
 
-public abstract class MecanumDriveIMU extends LinearOpMode {
+public class MecanumDriveIMU  {
+    private Telemetry telemetry;
+    private LinearOpMode opMode;
 
     interface TickCallback {
         // this can be any type of method
@@ -21,6 +26,8 @@ public abstract class MecanumDriveIMU extends LinearOpMode {
 
     BNO055IMU imu;
     Orientation lastAngles = new Orientation();
+    Orientation turnStart;
+
     double                  globalAngle,  correction;
 
     private HPMC[] motors = new HPMC[4];
@@ -43,11 +50,10 @@ public abstract class MecanumDriveIMU extends LinearOpMode {
     static long tickTime = 50; //in milliseconds
     private TickCallback callback;
 
-    abstract public void runOpMode() throws InterruptedException;
+    public void init(HardwareMap hardwareMap, Telemetry telemetryIn, LinearOpMode opModeIn) {
 
-    public void initialize() {
-
-
+        telemetry = telemetryIn;
+        opMode = opModeIn;
         motors[FL] = new HPMC(hardwareMap, "left_front", MOTOR_SPEED);
         motors[BL] = new HPMC(hardwareMap, "left_back", MOTOR_SPEED);
         motors[FR] = new HPMC(hardwareMap, "right_front", MOTOR_SPEED);
@@ -302,7 +308,7 @@ public abstract class MecanumDriveIMU extends LinearOpMode {
     void smTickUntilAllDone() {
         boolean done = false;
         tickSetup();
-        while (!done && this.opModeIsActive()) {
+        while (!done && opMode.opModeIsActive()) {
             done = true;
             for (HPMC motor : motors) {
                 //smTick returns true if we are done, false if we need to keep going
@@ -407,27 +413,93 @@ public abstract class MecanumDriveIMU extends LinearOpMode {
                     throw new IllegalArgumentException("Have to turn left or right");
             }
         }
-        double accelerationTicks = (speed* 15.0)+2;
+
+
         for (int i  = 0 ; i < 4; i++) {
             double thisWheelSpeed = Math.abs(speed * distances[i] / c);
-            if (Math.abs(thisWheelSpeed) < 0.1) {
-                System.out.println("Power low, ending stopped");
-                motors[i].smoothMoveSetup(distances[i] * arkDistanceMultiplyer, thisWheelSpeed, accelerationTicks, accelerationTicks * 1.5, HPMC.Direction.FORWARD, true);
-            } else {
-                System.out.println(String.format("Setting up %d.  Speed %.1f  Distance %.1f", i, thisWheelSpeed, distances[i]));
-                motors[i].smoothMoveSetup( distances[i] * arkDistanceMultiplyer, thisWheelSpeed, accelerationTicks, accelerationTicks * 1.5, HPMC.Direction.FORWARD, endStopped);
+            motors[i].setPowerSmart(thisWheelSpeed);
+        }
+        setTurnStart();
+        if (direction == MoveDirection.LEFT) {
+            degrees = -degrees;
+        }
+        Orientation lastOrientation = getOrientation();
+        int slowdownTicks = 10;
+        double biggestTickChange = 0;
+        boolean timeToSlowDown = false;
+        while (opMode.opModeIsActive() && !timeToSlowDown) {
+            Orientation currentOrientation = getOrientation();
+            double lastTickChange = Math.abs(angleDifference(currentOrientation, lastOrientation));
+            if (lastTickChange > biggestTickChange ) {
+                biggestTickChange = lastTickChange;
+            }
+            debug(String.format("Arcmoving %.1f" , degreesLeft(degrees)));
+
+            if ( Math.abs(degreesLeft(degrees)) < (biggestTickChange * slowdownTicks) ) {
+                timeToSlowDown = true;
+            }
+            tickSleep();
+        }
+        for (int i=0; i < slowdownTicks; i++) {
+            int ticksLeft = slowdownTicks - (i+1);
+            if (ticksLeft < 2) {ticksLeft = 2;}
+            double desiredAngularSpeed = Math.abs(degreesLeft(degrees)) / ticksLeft * 2;
+            double percentSpeed = desiredAngularSpeed / biggestTickChange;
+            String debugInfo = "";
+            for (int j=0; j<4; j++) {
+                degreesLeft(degrees);
+                double thisWheelSpeed = Math.abs(speed * desiredAngularSpeed);
+                motors[j].setPowerSmart(thisWheelSpeed*percentSpeed);
+                debugInfo += String.format("M:%d - %.1f " , j, thisWheelSpeed * percentSpeed);
+            }
+            debug( "Slowing: " + debugInfo);
+
+            tickSleep();
+            if (!opMode.opModeIsActive() ) {
+                break;
             }
         }
-        smTickUntilAllDone();
     }
 
+    void debug(String string) {
+        System.out.println("MCC: " + string) ;
+    }
 
+    Orientation getOrientation() {
+        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+    }
+
+    void setTurnStart() {
+        turnStart = getOrientation();
+    }
+
+    double degreesLeft(double degrees) {
+        if (degrees < 0) {
+            return getTurnedAngle() - degrees;
+        } else {
+            return degrees - getTurnedAngle();
+        }
+    }
+
+    double angleDifference(Orientation o1, Orientation o2) {
+        double deltaAngle = o1.firstAngle - o2.firstAngle;
+        if (deltaAngle < -180)
+            deltaAngle += 360;
+        else if (deltaAngle > 180)
+            deltaAngle -= 360;
+        return deltaAngle;
+    }
+
+    double getTurnedAngle() {
+        Orientation currentOrientation = getOrientation();
+        return angleDifference(turnStart, currentOrientation);
+    }
 
 
     void smTickUntilAnyDone() {
         boolean done = false;
         tickSetup();
-        while (!done && this.opModeIsActive()) {
+        while (!done && opMode.opModeIsActive()) {
             done = false;
             for (HPMC motor : motors) {
                 if (!motor.smTick()) {
