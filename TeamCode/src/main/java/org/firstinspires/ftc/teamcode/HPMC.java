@@ -249,6 +249,26 @@ public class HPMC {
     }
 
 
+    public String getMoveState() {
+        String percent;
+        if (smDistance > 0) {
+            percent = String.format(" %.1f%% %d",  (double) moved()*100 / (double) smDistance, smDistance - moved() );
+        } else {
+            percent = "---";
+        }
+        if (smState == MoveState.ACCELERATING) {
+            return  percent + "-A";
+        } else if (smState == MoveState.AT_SPEED) {
+            return  percent + "-R";
+        } else if ( smState == MoveState.STOPPING) {
+            return  percent + "-S";
+        } else if ( smState == MoveState.DONE) {
+            return  percent + "-D";
+        } else {
+            return percent + "-?";
+        }
+    }
+
     public boolean smTick() {
         double tickSeconds = tickTime / 1000.0;
         updateCurrentSpeed();

@@ -2,20 +2,26 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import static java.lang.Math.sqrt;
 
-public class MecanumDrive {
+public abstract class MecanumDriveIMU extends LinearOpMode {
 
     interface TickCallback {
         // this can be any type of method
         void tickCallback();
     }
+
+    BNO055IMU imu;
+    Orientation lastAngles = new Orientation();
+    double                  globalAngle,  correction;
 
     private HPMC[] motors = new HPMC[4];
     private double[] power = new double[4];
@@ -24,38 +30,28 @@ public class MecanumDrive {
     private final long COUNT_PER_INCH_STRAFING = 60;
     private final double COUNT_PER_DEGREE = 8.9;
 
-
     private final int FL = 0;
     private final int FR = 2;
     private final int BL = 1;
     private final int BR = 3;
-    private Telemetry telemetry;
-    private LinearOpMode opMode;
-
 
 
     enum MoveDirection {FORWARD, BACKWARD, LEFT, RIGHT}
-
 
     //For Smart Ticks
     private long nextWake = 0;
     static long tickTime = 50; //in milliseconds
     private TickCallback callback;
 
+    abstract public void runOpMode() throws InterruptedException;
+
+    public void initialize() {
 
 
-
-    public void init(HardwareMap hardwareMap, Telemetry telemetryIn, LinearOpMode opModeIn) {
-
-        telemetry = telemetryIn;
-        opMode = opModeIn;
         motors[FL] = new HPMC(hardwareMap, "left_front", MOTOR_SPEED);
         motors[BL] = new HPMC(hardwareMap, "left_back", MOTOR_SPEED);
         motors[FR] = new HPMC(hardwareMap, "right_front", MOTOR_SPEED);
         motors[BR] = new HPMC(hardwareMap, "right_back", MOTOR_SPEED);
-
-
-
 
         // Set Power Levels to zero
         for (HPMC motor : motors) {
@@ -77,6 +73,19 @@ public class MecanumDrive {
         motors[FR].setDirection(DcMotor.Direction.REVERSE);
         motors[BR].setDirection(DcMotor.Direction.REVERSE);
 
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+
+        parameters.mode                = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled      = false;
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+    }
+
+
+    boolean readyToStart() {
+        return imu.isGyroCalibrated();
     }
 
 
@@ -293,7 +302,7 @@ public class MecanumDrive {
     void smTickUntilAllDone() {
         boolean done = false;
         tickSetup();
-        while (!done && opMode.opModeIsActive()) {
+        while (!done && this.opModeIsActive()) {
             done = true;
             for (HPMC motor : motors) {
                 //smTick returns true if we are done, false if we need to keep going
@@ -306,14 +315,6 @@ public class MecanumDrive {
 
                 }
             }
-            String status = "";
-            status = status + " | FL: " + motors[FL].getMoveState();
-            status = status + " | FR: " + motors[FR].getMoveState();
-            status = status + " | BL: " + motors[BL].getMoveState();
-            status = status + " | BR: " + motors[BR].getMoveState();
-            System.out.println("Ticking Status" + status);
-
-
             //System.out.println("All Done: " + done);
             tickSleep();
 
@@ -426,7 +427,7 @@ public class MecanumDrive {
     void smTickUntilAnyDone() {
         boolean done = false;
         tickSetup();
-        while (!done && opMode.opModeIsActive()) {
+        while (!done && this.opModeIsActive()) {
             done = false;
             for (HPMC motor : motors) {
                 if (!motor.smTick()) {
