@@ -300,6 +300,11 @@ public class MecanumDriveIMU  {
         }
         if (endStopped) {
             smTickUntilAllDone();
+            for (HPMC motor: motors) {
+                if (motor.power != 0) {
+                    motor.setPower(0);
+                }
+            }
         } else {
             smTickUntilAnyDone();
         }
