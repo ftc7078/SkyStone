@@ -49,9 +49,7 @@ public class RedLoad extends LinearOpMode {
 
         waitForStart();
 
-        robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
-
-        mecanumDrive.forward(24,.5);
+mecanumDrive.forward(24,.5);
 
         //to pick up the blocks
         //run colector until sensor is triggered
@@ -73,8 +71,6 @@ public class RedLoad extends LinearOpMode {
 
         mecanumDrive.forward(12, .5);
 
-        robot.setCapstone(AtlasRobot.CapstonePosition.UP);
-
-        sleep(1500);
+sleep(1500);
     }
 }

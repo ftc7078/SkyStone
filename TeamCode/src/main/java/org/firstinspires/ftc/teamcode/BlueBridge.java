@@ -30,9 +30,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="BlueBridge", group ="Concept")
@@ -54,10 +51,8 @@ public class BlueBridge extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
-        robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
-        sleep(24000);
+sleep(24000);
         mecanumDrive.forward(48, .5);
-        robot.setCapstone(AtlasRobot.CapstonePosition.UP);
-        sleep(1500);
+sleep(1500);
     }
 }

@@ -76,13 +76,21 @@ public class TeleopMecanum extends LinearOpMode {
             boolean pull = gamepad2.b;
             boolean push = gamepad2.x;
 
-            if (gamepad2.left_bumper && gamepad2.right_bumper) {
-                robot.setCapstone(AtlasRobot.CapstonePosition.DOWN);
-            } else if (gamepad2.left_bumper || gamepad2.right_bumper) {
-                robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
+            robot.capstoneArm(gamepad2.left_bumper);
+            if (gamepad2.right_bumper) {
+                //mecanumDrive.setMotors(0,0,0,1);
+                robot.dropCapstone(true);
+                sleep(100);
+                robot.capstoneArm(false);
+                sleep(100);
+
             } else {
-                robot.setCapstone(AtlasRobot.CapstonePosition.UP);
+                robot.dropCapstone(false);
             }
+            robot.dropCapstone(gamepad2.right_bumper);
+
+
+
             if (pull) {
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
                 telemetry.addData("Manipulator Motors", "Pulling");

@@ -12,6 +12,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import static java.lang.Thread.sleep;
+
 public class AtlasRobot {
 
     private Telemetry telemetry;
@@ -26,10 +28,10 @@ public class AtlasRobot {
     private Servo foundationRight;
     public ManipulatorDirection manipulatorState;
     public boolean manipulatorAutostop = false;
-    Servo capstone;
+    Servo capstoneArm;
+    Servo capstoneDrop;
     Servo inRamp;
     DigitalChannel digitalTouch;
-    enum CapstonePosition { UP, MIDDLE, DOWN}
     enum ManipulatorDirection { IN, OUT, STOP}
 
     public void init(HardwareMap hardwareMap, Telemetry telemetryIn, LinearOpMode opModeIn) {
@@ -39,7 +41,8 @@ public class AtlasRobot {
 
         foundationLeft = hardwareMap.get(Servo.class, "foundationLeft");
         foundationRight = hardwareMap.get(Servo.class, "foundationRight");
-        capstone = hardwareMap.get(Servo.class, "capstone");
+        capstoneArm = hardwareMap.get(Servo.class, "capstone_arm");
+        capstoneDrop = hardwareMap.get(Servo.class, "capstone_drop");
         inRamp = hardwareMap.get(Servo.class, "in_ramp");
 
         leftManipulator = hardwareMap.get(DcMotor.class, "left_manipulator");
@@ -56,17 +59,19 @@ public class AtlasRobot {
 
     }
 
-    void setCapstone(CapstonePosition position) {
-        switch (position) {
-            case UP:
-                capstone.setPosition(0.1);
-                break;
-            case MIDDLE:
-                capstone.setPosition(0.5);
-                break;
-            case DOWN:
-                capstone.setPosition(0.62);
-                break;
+    void capstoneArm(boolean out) {
+        if (out) {
+            capstoneArm.setPosition(1);
+        } else {
+            capstoneArm.setPosition(0);
+        }
+    }
+    void dropCapstone (boolean open) {
+        if (open) {
+            capstoneDrop.setPosition(.5);
+
+        } else {
+            capstoneDrop.setPosition(1);
         }
     }
 

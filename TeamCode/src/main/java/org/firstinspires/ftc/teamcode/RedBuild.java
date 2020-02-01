@@ -30,9 +30,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="RedBuild", group ="Concept")
@@ -48,8 +45,7 @@ public class RedBuild extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         waitForStart();
 
-        robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
-        mecanumDrive.forward(12,.5);
+mecanumDrive.forward(12,.5);
         mecanumDrive.rightTurn(45, .5);
         mecanumDrive.forward(20, .5);
         mecanumDrive.leftTurn(45, .5);
@@ -66,7 +62,6 @@ public class RedBuild extends LinearOpMode {
         mecanumDrive.leftTurn(180, .5);
         mecanumDrive.leftStrafe(24, .5);
         mecanumDrive.forward(36,.5);
-        robot.setCapstone(AtlasRobot.CapstonePosition.UP);
-        sleep(1500);
+sleep(1500);
     }
 }

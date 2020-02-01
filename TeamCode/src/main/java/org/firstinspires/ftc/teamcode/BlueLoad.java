@@ -52,8 +52,7 @@ public class BlueLoad extends LinearOpMode {
 
         waitForStart();
 
-        robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
-        mecanumDrive.forward(24,.5);
+mecanumDrive.forward(24,.5);
         mecanumDrive.leftTurn(120, .5);
         robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
         mecanumDrive.backward(24, .5);
@@ -67,7 +66,6 @@ public class BlueLoad extends LinearOpMode {
         robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
         mecanumDrive.forward(12, .5);
 
-        robot.setCapstone(AtlasRobot.CapstonePosition.UP);
-        sleep(1500);
+sleep(1500);
     }
 }

@@ -34,9 +34,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Red Skystone", group ="Concept")
 
-public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallback {
+public class RedSkystone extends LinearOpMode implements MecanumDriveIMU.TickCallback {
 
-    private MecanumDrive mecanumDrive = new MecanumDrive();
+    private MecanumDriveIMU mecanumDrive = new MecanumDriveIMU();
     private AtlasRobot robot = new AtlasRobot();
     private TensorflowDetector tf;
     enum RedScan {LEFT, MIDDLE, RIGHT}
@@ -59,6 +59,7 @@ public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallba
         mecanumDrive.setupTickCallback(this);
 
         waitForStart();
+        robot.inRamp.setPosition(1);
         int path = 0;
         int loops = 0;
         for (int i = 1; i<60; i++) {
@@ -87,19 +88,18 @@ public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallba
     void redScan(RedScan output) {
         switch (output) {
             case RIGHT:
-                robot.setCapstone(AtlasRobot.CapstonePosition.MIDDLE);
-                mecanumDrive.backward(22, 1);
+                mecanumDrive.backward(29, 1);
+                mecanumDrive.rightTurn(20,1);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN, true);
-                mecanumDrive.arcMove(8, -90,.5, MecanumDrive.MoveDirection.LEFT,false,true);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
-                mecanumDrive.leftStrafe(14,.5);
+                mecanumDrive.backward(18,1);
+                /*mecanumDrive.leftStrafe(18,.5);
                 mecanumDrive.backward(72,1);
                 mecanumDrive.rightTurn(90,1);
                 mecanumDrive.forward(18,1);
                 robot.foundationMover(false);
                 sleep(1000);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
-                mecanumDrive.arcMove(12,-100,.5,MecanumDrive.MoveDirection.LEFT,true,true);
+                mecanumDrive.arcMove(12,-100,.5,MecanumDriveIMU.MoveDirection.LEFT,true,true);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
                 robot.foundationMover(true);
                 mecanumDrive.leftStrafe(4,1);
@@ -114,8 +114,7 @@ public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallba
                 sleep(500);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
                 mecanumDrive.backward(48,1);
-                robot.setCapstone(AtlasRobot.CapstonePosition.UP);
-                sleep(1500);
+                */
                 break;
             case MIDDLE:
 
