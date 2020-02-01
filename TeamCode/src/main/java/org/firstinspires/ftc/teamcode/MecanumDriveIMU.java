@@ -414,17 +414,21 @@ public class MecanumDriveIMU  {
             }
         }
 
+        for (int i  = 0 ; i < 4; i++) {
+            speeds[i] =  speed * distances[i] / c;
+            debug(String.format("Motor Speed: %d, %.1f", i, speeds[i]));
+        }
+
 
         for (int i  = 0 ; i < 4; i++) {
-            double thisWheelSpeed = Math.abs(speed * distances[i] / c);
-            motors[i].setPowerSmart(thisWheelSpeed);
+            motors[i].setPowerSmart(speeds[i]);
         }
         setTurnStart();
         if (direction == MoveDirection.LEFT) {
             degrees = -degrees;
         }
         Orientation lastOrientation = getOrientation();
-        int slowdownTicks = 10;
+        int slowdownTicks = 12;
         double biggestTickChange = 0;
         boolean timeToSlowDown = false;
         while (opMode.opModeIsActive() && !timeToSlowDown) {
@@ -433,26 +437,35 @@ public class MecanumDriveIMU  {
             if (lastTickChange > biggestTickChange ) {
                 biggestTickChange = lastTickChange;
             }
-            debug(String.format("Arcmoving %.1f" , degreesLeft(degrees)));
+            lastOrientation = currentOrientation;
+            debug(String.format("Arcmoving %.1f  BTC%.4f" , degreesLeft(degrees), biggestTickChange));
 
-            if ( Math.abs(degreesLeft(degrees)) < (biggestTickChange * slowdownTicks) ) {
+            if ( Math.abs(degreesLeft(degrees)) < (biggestTickChange * slowdownTicks / 2.2 ) ) {
                 timeToSlowDown = true;
+            }
+            for (int i=0; i < slowdownTicks; i++) {
+                for (HPMC motor : motors) {
+                    motor.updateCurrentSpeed();
+                    motor.autoAdjust();
+                }
             }
             tickSleep();
         }
         for (int i=0; i < slowdownTicks; i++) {
             int ticksLeft = slowdownTicks - (i+1);
             if (ticksLeft < 2) {ticksLeft = 2;}
-            double desiredAngularSpeed = Math.abs(degreesLeft(degrees)) / ticksLeft * 2;
+            double desiredAngularSpeed =degreesLeft(degrees) / ticksLeft * 1.5;
             double percentSpeed = desiredAngularSpeed / biggestTickChange;
+            if (percentSpeed > 1) { percentSpeed =1;}
+            if (percentSpeed < -1) { percentSpeed =-1;}
+
             String debugInfo = "";
+
             for (int j=0; j<4; j++) {
-                degreesLeft(degrees);
-                double thisWheelSpeed = Math.abs(speed * desiredAngularSpeed);
-                motors[j].setPowerSmart(thisWheelSpeed*percentSpeed);
-                debugInfo += String.format("M:%d - %.1f " , j, thisWheelSpeed * percentSpeed);
+                motors[j].setPowerSmart(speeds[j]*percentSpeed);
+                debugInfo += String.format("M:%d-%.1f-P%.1f" , j, speeds[j] * percentSpeed, motors[j].power);
             }
-            debug( "Slowing: " + debugInfo);
+            debug( String.format("Slowing: (DL:%.1f) (TL:%d) (DAS:%.1f) %s" , degreesLeft(degrees),  ticksLeft, desiredAngularSpeed, debugInfo));
 
             tickSleep();
             if (!opMode.opModeIsActive() ) {

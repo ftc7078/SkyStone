@@ -55,17 +55,9 @@ public class TeleopMecanum extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            // Setup a variable for each drive wheel to save power level for telemetry
-
-            // Mecanum Mode uses left stick to go forwardSpeed and turn.
-
+            gamepad1.setJoystickDeadzone((float)0.2);
             double speed = 1;
-             //if ( gamepad1.left_trigger > 0.5 ) {
-             //    speed = 0.6;
-             //}
-             //if ( gamepad1.right_trigger > 0.5) {
-             //    speed = 0.3;
-             //}
+
              speed = (gamepad1.right_trigger * 0.7) + 0.3;
             double fwd = gamepad1.left_stick_y;
             double strafe = gamepad1.left_stick_x;
