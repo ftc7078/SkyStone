@@ -91,7 +91,8 @@ public class RedSkystone extends LinearOpMode implements MecanumDriveIMU.TickCal
                 mecanumDrive.backward(29, 1);
                 mecanumDrive.rightTurn(20,1);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN, true);
-                mecanumDrive.backward(18,1);
+                mecanumDrive.backward(18,.5);
+
                 /*mecanumDrive.leftStrafe(18,.5);
                 mecanumDrive.backward(72,1);
                 mecanumDrive.rightTurn(90,1);
