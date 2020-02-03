@@ -53,6 +53,9 @@ public class AtlasRobot {
         leftManipulator.setPower(0);
         rightManipulator.setPower(0);
 
+        dropCapstone(false);
+        foundationMover(true);
+
         digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         // Reverse the motors that runs backwards when connected directly to the battery

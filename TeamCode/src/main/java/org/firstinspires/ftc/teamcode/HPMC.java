@@ -172,17 +172,13 @@ public class HPMC {
         velocitySoon = currentVelocity + (accelleration * LOOK_AHEAD_TIME);
         double difference =  desiredVelocity - velocitySoon;
         if ( Math.abs(desiredVelocity) < 1) {
-            power = 0;
-            change = 0;
+            change = -power;
             //System.out.println(String.format("Change from zeroing: %.4f", change));
         } else if ( (velocitySoon / desiredVelocity) > 1.01) {
             change =  (power * (desiredVelocity / velocitySoon)) - power;
             //System.out.println(String.format("Change from overspeed: %.4f", change));
         } else {
             change = FINE_POWER_SCALE * difference;
-            if (Math.abs(change) < 0.01) {
-                change = recoverLostSign(0.01, change);
-            }
             //System.out.println(String.format("Change from power scale: %.4f", change));
         }
 
@@ -387,36 +383,40 @@ public class HPMC {
                 debug(String.format("A_S DS:%.2f  CS:%.2f Moved:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, moved(), smStartStopping, power));
                 return(true);
             case STOPPING:
-                double distanceDecelerating = smDistance - smStartStopping;
-                long stoppingDistanceLeft =  (smDistance - moved());
-                smDecelerationTick++;
-                long ticksLeft = smDecelerationTicks - smDecelerationTick;
-                if  (ticksLeft < 1) {
-                    stopIfEndingStopped();
-                    smState = MoveState.DONE;
-                    return (false);
-                }
-                //double ratio = (0.7 * smDecelerationTick  / (double) smDecelerationTicks) + 0.1;
-                //desiredVelocity = (smSpeed  - (smSpeed * ratio));
+                if (false) {
 
-                double percentLeft = ((stoppingDistanceLeft) / (double) distanceDecelerating);
-                double timeLeft = (ticksLeft * tickSeconds);
-                desiredVelocity =  (stoppingDistanceLeft / timeLeft * 2.2) + 50;
-                desiredVelocity = recoverLostSign(desiredVelocity, smVelocity);
-
-                //estiamated braking speed change is 600/50ms;
-                long minStoppingDistance = (long) (( currentVelocity / 300 ) * tickSeconds);
-
-                if ( stoppingDistanceLeft  > minStoppingDistance ) {
-
-                    autoAdjust(true);
-                    debug(String.format("SLO DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
-                    return(true);
                 } else {
-                    stopIfEndingStopped();
-                    debug(String.format("BRK DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
+                    double distanceDecelerating = smDistance - smStartStopping;
+                    long stoppingDistanceLeft = (smDistance - moved());
+                    smDecelerationTick++;
+                    long ticksLeft = smDecelerationTicks - smDecelerationTick;
+                    if (ticksLeft < 1) {
+                        stopIfEndingStopped();
+                        smState = MoveState.DONE;
+                        return (false);
+                    }
+                    //double ratio = (0.7 * smDecelerationTick  / (double) smDecelerationTicks) + 0.1;
+                    //desiredVelocity = (smSpeed  - (smSpeed * ratio));
 
-                    return (true);
+                    double percentLeft = ((stoppingDistanceLeft) / (double) distanceDecelerating);
+                    double timeLeft = (ticksLeft * tickSeconds);
+                    desiredVelocity = (stoppingDistanceLeft / timeLeft * 2.2) + 50;
+                    desiredVelocity = recoverLostSign(desiredVelocity, smVelocity);
+
+                    //estiamated braking speed change is 600/50ms;
+                    long minStoppingDistance = (long) ((currentVelocity / 300) * tickSeconds);
+
+                    if (stoppingDistanceLeft > minStoppingDistance) {
+
+                        autoAdjust(true);
+                        debug(String.format("SLO DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
+                        return (true);
+                    } else {
+                        stopIfEndingStopped();
+                        debug(String.format("BRK DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
+
+                        return (true);
+                    }
                 }
             case DONE:
                 debug(String.format("DONE DSPD: %.2f  SPD: %.2f M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity,  moved(), smDistance, power));

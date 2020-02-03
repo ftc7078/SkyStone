@@ -32,25 +32,25 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="RedBridge", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Run This Teddy!", group ="Concept")
 
 public class RedBridge extends LinearOpMode {
 
 
     private MecanumDrive mecanumDrive = new MecanumDrive();
-    private AtlasRobot robot = new AtlasRobot();
+
 
     @Override public void runOpMode() {
 
         mecanumDrive.init(hardwareMap, telemetry, this);
-        robot.init(hardwareMap, telemetry, this);
+
 
         telemetry.addData("Status", "Initialized");
 
         waitForStart();
 
-sleep(24000);
-        mecanumDrive.forward(48, .5);
+sleep(26000);
+        mecanumDrive.forward(42, .5);
 sleep(1500);
     }
 }

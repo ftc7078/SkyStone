@@ -32,7 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="BlueBridge", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="24 Bridge", group ="Concept")
 
 public class BlueBridge extends LinearOpMode {
 
@@ -52,7 +52,7 @@ public class BlueBridge extends LinearOpMode {
         waitForStart();
 
 sleep(24000);
-        mecanumDrive.forward(48, .5);
+        mecanumDrive.forward(24, .5);
 sleep(1500);
     }
 }
