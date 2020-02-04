@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import java.util.ArrayList;
 
 
-public class HPMC {
+public class HPMCVelocityFailure {
     static final float NANOSECONDS_PER_SECOND = 1000000000;
     static final double LOOK_AHEAD_TIME = 0.075;
     static final double FINE_POWER_SCALE =  0.0002;
@@ -64,11 +64,11 @@ public class HPMC {
     ArrayList<Integer> positionList = new ArrayList<Integer>();
     ArrayList<Long> timeList = new ArrayList<Long>();
 
-    public HPMC(DcMotorEx setMotor) {
+    public HPMCVelocityFailure(DcMotorEx setMotor) {
         motor = setMotor;
     }
 
-    public HPMC(HardwareMap hardwareMap, String motorString, double maxSpeedIn) {
+    public HPMCVelocityFailure(HardwareMap hardwareMap, String motorString, double maxSpeedIn) {
         motor = hardwareMap.get(DcMotorEx.class, motorString);
         maxSpeed = maxSpeedIn;
     }
@@ -78,7 +78,7 @@ public class HPMC {
         updateCurrentVelocity();
     }
 
-    public HPMC(DcMotorEx setMotor, double maxSpeedIn) {
+    public HPMCVelocityFailure(DcMotorEx setMotor, double maxSpeedIn) {
         motor = setMotor;
         maxSpeed = maxSpeedIn;
     }
@@ -403,36 +403,91 @@ public class HPMC {
                 }
                 debug(String.format("A_S DS:%.2f  CS:%.2f Moved:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, moved(), smStartStopping, power));
                 return(true);
-            case STOPPING: {
+            case STOPPING:
+                if (false) {
+                    //Run_to_position mode.  I don't trust run to position.  It behaves pathalogically but it brakes beautifully.
+                    smDecelerationTick++;
+                    long ticksLeft = smDecelerationTicks - smDecelerationTick;
+                    if (ticksLeft < 1) {
+                        debug("TICKS LEFT IS LESS THAN ONE!");
+                        stopIfEndingStopped();
+                        smState = MoveState.DONE;
+                        return (false);
+                    }
+                    if (!smBrakingConfigured) {
+                        motor.setTargetPosition((int) smEndPosition);
+                        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                        motor.setPower(1);
+                        smBrakingConfigured = true;
+                    } else {
+                        long stoppingDistanceLeft = (smDistance - moved());
+                        double timeLeft = (ticksLeft * tickSeconds);
+                        desiredVelocity = (stoppingDistanceLeft / timeLeft * 2.2) ;
+                        if ( ( Math.abs(currentVelocity) < (maxSpeed / 5) )  || ( (desiredVelocity / currentVelocity) > 1.5 ) ) {
+                            motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                            desiredVelocity = recoverLostSign(desiredVelocity, smVelocity);
+                            autoAdjust();
+                            debug(String.format("SLO DV: %.2f  AV: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
+                        } else {
+                            debug(String.format("BRK DV: %.2f  AV: %.2f Ratio:%.2f", desiredVelocity, currentVelocity, desiredVelocity/currentVelocity));
+                        }
+                    }
+                    return(true);
 
-                long stoppingDistanceLeft = (smDistance - moved());
-                smDecelerationTick++;
-                long ticksLeft = smDecelerationTicks - smDecelerationTick - 1;
-                if (ticksLeft < 1) {
-                    stopIfEndingStopped();
-                    smState = MoveState.DONE;
-                    return (false);
-                }
-                //double ratio = (0.7 * smDecelerationTick  / (double) smDecelerationTicks) + 0.1;
-                //desiredVelocity = (smSpeed  - (smSpeed * ratio));
+                } else if (false) {
+                    long stoppingDistanceLeft = (smDistance - moved());
+                    smDecelerationTick++;
+                    long ticksLeft = smDecelerationTicks - smDecelerationTick;
+                    if (ticksLeft < 1) {
+                        stopIfEndingStopped();
+                        smState = MoveState.DONE;
+                        return (false);
+                    }
+                    //double ratio = (0.7 * smDecelerationTick  / (double) smDecelerationTicks) + 0.1;
+                    //desiredVelocity = (smSpeed  - (smSpeed * ratio));
 
-                double timeLeft = (ticksLeft * tickSeconds);
-                desiredVelocity = (stoppingDistanceLeft / timeLeft * 2);
-                desiredVelocity = recoverLostSign(desiredVelocity, smVelocity);
-
-                //estimated braking speed change is 600/50ms;
-                long minStoppingDistance = (long) ((currentVelocity / 300) * tickSeconds);
-
-                if (stoppingDistanceLeft > minStoppingDistance) {
-                    autoAdjust(true);
-                    debug(String.format("SLO DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
+                    double timeLeft = (ticksLeft * tickSeconds);
+                    desiredVelocity = (stoppingDistanceLeft / timeLeft * 3) ;
+                    desiredVelocity = recoverLostSign(desiredVelocity, smVelocity);
+                    //estiamated braking speed change is 600/50ms;
+                    motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    //lie to the motor controller so it reacts faster
+                    double energyRatio = currentVelocity * currentVelocity / (desiredVelocity * desiredVelocity) ;
+                    double motorVelocity = desiredVelocity - energyRatio * 0.25 * (currentVelocity - desiredVelocity);
+                    motor.setVelocity(motorVelocity);
+                    debug(String.format("SLO DV: %.2f  AV: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
                     return (true);
                 } else {
-                    stopIfEndingStopped();
-                    debug(String.format("BRK DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
-                    return (true);
+                    long stoppingDistanceLeft = (smDistance - moved());
+                    smDecelerationTick++;
+                    long ticksLeft = smDecelerationTicks - smDecelerationTick - 1;
+                    if (ticksLeft < 1) {
+                        stopIfEndingStopped();
+                        smState = MoveState.DONE;
+                        return (false);
+                    }
+                    //double ratio = (0.7 * smDecelerationTick  / (double) smDecelerationTicks) + 0.1;
+                    //desiredVelocity = (smSpeed  - (smSpeed * ratio));
+
+                    double timeLeft = (ticksLeft * tickSeconds);
+                    desiredVelocity = (stoppingDistanceLeft / timeLeft * 2) ;
+                    desiredVelocity = recoverLostSign(desiredVelocity, smVelocity);
+
+                    //estiamated braking speed change is 600/50ms;
+                    long minStoppingDistance = (long) ((currentVelocity / 300) * tickSeconds);
+
+                    if (stoppingDistanceLeft > minStoppingDistance) {
+
+                        autoAdjust(true);
+                        debug(String.format("SLO DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
+                        return (true);
+                    } else {
+                        stopIfEndingStopped();
+                        debug(String.format("BRK DSPD: %.2f  SPD: %.2f DistLeft: %d TL:%d M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity, stoppingDistanceLeft, ticksLeft, moved(), smDistance, power));
+
+                        return (true);
+                    }
                 }
-            }
             case DONE:
                 //debug(String.format("DONE DSPD: %.2f  SPD: %.2f M:%d of %d PWR:%.2f", desiredVelocity, currentVelocity,  moved(), smDistance, power));
                 stopIfEndingStopped();

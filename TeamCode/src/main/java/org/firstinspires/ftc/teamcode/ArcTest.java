@@ -32,9 +32,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Arc Test", group ="Tests")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Arc Test", group ="Tests")
 
-public class MecanumArcTest extends LinearOpMode {
+public class ArcTest extends LinearOpMode {
 
     private MecanumDrive mecanumDrive = new MecanumDrive();
     private AtlasRobot robot = new AtlasRobot();
@@ -50,7 +50,7 @@ public class MecanumArcTest extends LinearOpMode {
         waitForStart();
 
         //mecanumDrive.backward(4, 0.5);
-        mecanumDrive.arcMove( 2, 90, .8, MecanumDrive.MoveDirection.RIGHT, false, true);
+        mecanumDrive.arcMove( 2, -90, .8, MecanumDrive.MoveDirection.RIGHT, false, true);
         //mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, false, true);
         //mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.RIGHT, true, true);
        // mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, true, true);

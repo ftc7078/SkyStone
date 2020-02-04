@@ -10,7 +10,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 
-@Autonomous(name="IMU2", group="Tests")
+@Autonomous(name="IMU2To", group="Tests")
 
 public class IMUTest2 extends LinearOpMode
 {
@@ -23,25 +23,41 @@ public class IMUTest2 extends LinearOpMode
         mecanumDrive.init(hardwareMap, telemetry, this);
         robot.init(hardwareMap, telemetry, this);
 
-        telemetry.addData("Status", "Not ready");
-        telemetry.update();
 
-        while (!mecanumDrive.readyToStart()) {
-            telemetry.addData("Status", "Not ready");
+
+        while (!mecanumDrive.isReady()) {
+            telemetry.addData("Status", "initializing");
             telemetry.update();
             sleep(50);
         }
+
+
         telemetry.addData("Status", "ready");
         telemetry.update();
 
         waitForStart();
         mecanumDrive.setTurnStart();
         while (opModeIsActive()) {
+            Orientation currentOrientation = mecanumDrive.getOrientation();
+            double diff = mecanumDrive.angleDifference(currentOrientation, mecanumDrive.orientationAtStart);
+
+
+
             telemetry.addData("Angle", mecanumDrive.getTurnedAngle()) ;
-            telemetry.addData("Left", mecanumDrive.degreesLeft(-90)) ;
+            telemetry.addData("Diff from start", diff) ;
 
             telemetry.update();
-            sleep(50);
+
+
+
+            if (diff < 0) {
+                mecanumDrive.leftTurn(Math.abs(diff), .5);
+            } else {
+                mecanumDrive.rightTurn(diff, 0.5);
+            }
+            sleep(2000);
+
+
 
         }
 

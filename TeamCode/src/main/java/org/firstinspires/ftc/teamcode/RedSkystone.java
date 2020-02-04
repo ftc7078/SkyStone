@@ -88,34 +88,10 @@ public class RedSkystone extends LinearOpMode implements MecanumDriveIMU.TickCal
     void redScan(RedScan output) {
         switch (output) {
             case RIGHT:
-                mecanumDrive.backward(29, 1);
-                mecanumDrive.rightTurn(20,1);
+                mecanumDrive.backward(22, 1);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN, true);
-                mecanumDrive.backward(18,.5);
+                mecanumDrive.arcMove( 8, -90, 1, MecanumDriveIMU.MoveDirection.LEFT, false, true);
 
-                /*mecanumDrive.leftStrafe(18,.5);
-                mecanumDrive.backward(72,1);
-                mecanumDrive.rightTurn(90,1);
-                mecanumDrive.forward(18,1);
-                robot.foundationMover(false);
-                sleep(1000);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
-                mecanumDrive.arcMove(12,-100,.5,MecanumDriveIMU.MoveDirection.LEFT,true,true);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
-                robot.foundationMover(true);
-                mecanumDrive.leftStrafe(4,1);
-                mecanumDrive.backward(66,1);
-                mecanumDrive.leftStrafe(20,.5);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN, true);
-                mecanumDrive.backward(12,1);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
-                mecanumDrive.rightStrafe(20,1);
-                mecanumDrive.forward(96,1);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
-                sleep(500);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
-                mecanumDrive.backward(48,1);
-                */
                 break;
             case MIDDLE:
 

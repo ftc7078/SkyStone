@@ -58,6 +58,7 @@ public class MecanumTest2 extends LinearOpMode {
     private final double MSPEED = 1.0;
     private double updates = 0;
     MecanumDrive mecanumDrive = new MecanumDrive();
+    AtlasRobot robot = new AtlasRobot();
 
     @Override
     public void runOpMode() {
@@ -71,9 +72,9 @@ public class MecanumTest2 extends LinearOpMode {
         mecanumDrive.init(hardwareMap, telemetry, this);
 
 
+
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
-        Servo capstone = hardwareMap.get(Servo.class, "capstone");
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -81,13 +82,7 @@ public class MecanumTest2 extends LinearOpMode {
 
         waitForStart();
 
-        /*
-        capstone.setPosition(1);
-        sleep(1000);
-        capstone.setPosition(0);
-        sleep(1000);
-        capstone.setPosition(1);
-        */
+
 
 
         mecanumDrive.forward(48, 0.7);

@@ -1,5 +1,5 @@
 
-cd C:\Users\micro\AppData\Local\Android\Sdk\platform-tools\
+cd platform-tools
 adb devices
 
 adb connect 192.168.43.1

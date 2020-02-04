@@ -36,14 +36,10 @@ public class MecanumDrive {
 
     enum MoveDirection {FORWARD, BACKWARD, LEFT, RIGHT}
 
-
     //For Smart Ticks
     private long nextWake = 0;
     static long tickTime = 50; //in milliseconds
     private TickCallback callback;
-
-
-
 
     public void init(HardwareMap hardwareMap, Telemetry telemetryIn, LinearOpMode opModeIn) {
 
@@ -53,9 +49,6 @@ public class MecanumDrive {
         motors[BL] = new HPMC(hardwareMap, "left_back", MOTOR_SPEED);
         motors[FR] = new HPMC(hardwareMap, "right_front", MOTOR_SPEED);
         motors[BR] = new HPMC(hardwareMap, "right_back", MOTOR_SPEED);
-
-
-
 
         // Set Power Levels to zero
         for (HPMC motor : motors) {
@@ -241,6 +234,7 @@ public class MecanumDrive {
             motors[i].smoothMoveSetup(distance, power, accelerationTicks, accelerationTicks*1.5 , FR_Direction, true);
         }
         smTickUntilAllDone();
+        logSlop("turn" + degrees);
 
     }
 
@@ -288,6 +282,20 @@ public class MecanumDrive {
         } else {
             smTickUntilAnyDone();
         }
+        logSlop("move " + inches);
+
+    }
+
+
+    void logSlop(String what) {
+        int slopTotal = 0;
+        String slopString = "";
+        for (HPMC motor: motors) {
+            int slop = (int) motor.distanceLeft();
+            slopTotal += Math.abs(slop);
+            slopString += " " + slop;
+        }
+        System.out.println("Slop "+ what + ": " + slopString + " Total: " +  slopTotal);
     }
 
     void smTickUntilAllDone() {
@@ -295,6 +303,15 @@ public class MecanumDrive {
         tickSetup();
         while (!done && opMode.opModeIsActive()) {
             done = true;
+
+            String status = "";
+            status = status + " | FL: " + motors[FL].getMoveState();
+            status = status + " | FR: " + motors[FR].getMoveState();
+            status = status + " | BL: " + motors[BL].getMoveState();
+            status = status + " | BR: " + motors[BR].getMoveState();
+            System.out.println("Ticking Status" + status);
+
+
             for (HPMC motor : motors) {
                 //smTick returns true if we are done, false if we need to keep going
                 //Keep going if any motor is not done
@@ -306,25 +323,15 @@ public class MecanumDrive {
 
                 }
             }
-            String status = "";
-            status = status + " | FL: " + motors[FL].getMoveState();
-            status = status + " | FR: " + motors[FR].getMoveState();
-            status = status + " | BL: " + motors[BL].getMoveState();
-            status = status + " | BR: " + motors[BR].getMoveState();
-            System.out.println("Ticking Status" + status);
-
-
             //System.out.println("All Done: " + done);
             tickSleep();
 
         }
         //one last tick while stopped to settle things out
         for (HPMC motor : motors) {
-            motor.updateCurrentSpeed();
+            motor.updateCurrentVelocity();
         }
         tickSleep();
-
-
     }
 
     double mecanumTravelRatio(double angle, boolean towardsPerpendicular) {
@@ -420,9 +427,6 @@ public class MecanumDrive {
         smTickUntilAllDone();
     }
 
-
-
-
     void smTickUntilAnyDone() {
         boolean done = false;
         tickSetup();
@@ -441,5 +445,7 @@ public class MecanumDrive {
             }
         }
     }
+
+
 
 }

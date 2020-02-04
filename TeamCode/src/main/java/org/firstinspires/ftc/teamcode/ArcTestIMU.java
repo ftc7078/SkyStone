@@ -32,9 +32,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Arc Test IMU", group ="Tests")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Arc Test IMU", group ="Tests")
 
-public class MecanumArcTestIMU extends LinearOpMode {
+public class ArcTestIMU extends LinearOpMode {
 
     private MecanumDriveIMU mecanumDrive = new MecanumDriveIMU();
     private AtlasRobot robot = new AtlasRobot();
@@ -45,8 +45,18 @@ public class MecanumArcTestIMU extends LinearOpMode {
         mecanumDrive.init(hardwareMap, telemetry, this);
         robot.init(hardwareMap, telemetry, this);
 
-        telemetry.addData("Status", "Initialized");
 
+        while (!mecanumDrive.isReady()) {
+            telemetry.addData("Status" , "IMU Initializing");
+            telemetry.update();
+            sleep(50);
+        }
+        telemetry.addData("Status", "Initialized");
+        while (!isStarted()) {
+            telemetry.addData("Status", "Initialized");
+            telemetry.update();
+            sleep(50);
+        }
         waitForStart();
 
         //mecanumDrive.backward(4, 0.5);
@@ -59,7 +69,6 @@ public class MecanumArcTestIMU extends LinearOpMode {
 
         //mecanumDrive.arcMove( 1, 90, .5, MecanumDrive.MoveDirection.LEFT, false, true);
 
-        pause();
 
 
 
