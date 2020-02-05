@@ -29,87 +29,61 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.drm.DrmStore;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Red Skystone", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Foundation Test Red", group ="Tests")
 
-public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallback {
+public class FoundationTurn extends LinearOpMode {
 
     private MecanumDrive mecanumDrive = new MecanumDrive();
     private AtlasRobot robot = new AtlasRobot();
-    private TensorflowDetector tf;
-    enum RedScan {LEFT, MIDDLE, RIGHT}
-    int updates;
 
     @Override
     public void runOpMode() {
-        tf = new TensorflowDetector();
-        tf.init(hardwareMap, telemetry, this);
-
-        while (!isStarted() ) {
-            telemetry.addData("path", tf.choosePath());
-            telemetry.update();
-            sleep(100);
-        }
 
         mecanumDrive.init(hardwareMap, telemetry, this);
         robot.init(hardwareMap, telemetry, this);
-        telemetry.addData("Status", "Initialized");
-        mecanumDrive.setupTickCallback(this);
 
-        waitForStart();
-        robot.inRamp.setPosition(1);
-        int path = 0;
-        int loops = 0;
-        for (int i = 1; i<60; i++) {
-            path = tf.choosePath();
-            loops=i;
-            if (path > 0) {
-                break;
-            }
-            telemetry.addData("loop", i);
+
+        while (!mecanumDrive.isReady()) {
+            telemetry.addData("Status" , "IMU Initializing");
             telemetry.update();
             sleep(50);
         }
-        if (path==0) {
-            path = 1;
+        telemetry.addData("Status", "Initialized");
+        while (!isStarted()) {
+            telemetry.addData("Status", "Initialized");
+            telemetry.update();
+            sleep(50);
         }
+        waitForStart();
 
-        if (path == 1) {
-            redScan(RedScan.RIGHT);
-        }else if (path == 2) {
-            redScan(RedScan.MIDDLE);
-        }else if (path == 3) {
-            redScan(RedScan.LEFT);
-        }else {}
-    }
-
-    void redScan(RedScan output) {
-        switch (output) {
-            case RIGHT:
-                mecanumDrive.backward(22, 1);
-                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN, true);
-                mecanumDrive.arcMove( 8, -90, 1, MecanumDrive.MoveDirection.LEFT, false, true);
-
-                break;
-            case MIDDLE:
-
-                break;
-            case LEFT:
-
-                break;
-
+        robot.foundationMover(false);
+        sleep(2000);
+        mecanumDrive.tankTurnStart(MecanumDrive.MoveDirection.RIGHT, -1);
+        robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
+        while(opModeIsActive() && mecanumDrive.degreesFromStart() > -90 ) {
+            sleep(50);
         }
+        robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
+        robot.foundationMover(true);
+        //mecanumDrive.backward(6,1);
+        mecanumDrive.leftStrafe(8, 5);
+        sleep(100);
+        mecanumDrive.turnTo(-90,1);
+        status( "Done");
 
     }
 
-    public void tickCallback() {
-        updates++;
-        if ( robot.switchPressed() ) {
-            robot.manipulatorAutostop();
-        }
-        telemetry.addData("I'm running callback code rightnow!", updates);
+    void pause() {
+        sleep(100);
+    }
+    void status(String string) {
+        telemetry.addData("Status", string);
         telemetry.update();
     }
 }
+

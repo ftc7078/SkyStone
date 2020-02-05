@@ -76,7 +76,7 @@ public class MecanumTest1 extends LinearOpMode {
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
-        Servo capstone = hardwareMap.get(Servo.class, "capstone");
+
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();

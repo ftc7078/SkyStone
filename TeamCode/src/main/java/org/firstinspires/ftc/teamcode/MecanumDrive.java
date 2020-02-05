@@ -2,20 +2,40 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 import static java.lang.Math.sqrt;
 
 public class MecanumDrive {
+    private Telemetry telemetry;
+    private LinearOpMode opMode;
 
     interface TickCallback {
         // this can be any type of method
         void tickCallback();
     }
+
+    BNO055IMU imu;
+    Orientation lastAngles = new Orientation();
+    Orientation turnStart, orientationAtStart;
+
+    double                  globalAngle,  correction;
 
     private HPMC[] motors = new HPMC[4];
     private double[] power = new double[4];
@@ -29,9 +49,6 @@ public class MecanumDrive {
     private final int FR = 2;
     private final int BL = 1;
     private final int BR = 3;
-    private Telemetry telemetry;
-    private LinearOpMode opMode;
-
 
 
     enum MoveDirection {FORWARD, BACKWARD, LEFT, RIGHT}
@@ -70,6 +87,28 @@ public class MecanumDrive {
         motors[FR].setDirection(DcMotor.Direction.REVERSE);
         motors[BR].setDirection(DcMotor.Direction.REVERSE);
 
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+
+        parameters.mode                = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled      = false;
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+        loadIMUCalibration("AdafruitIMUCalibration.json");
+        orientationAtStart = getOrientation();
+
+
+    }
+
+
+    boolean isReady() {
+        if ( imu.isGyroCalibrated() ) {
+            orientationAtStart = getOrientation();
+            return true;
+        } else {
+            return false;
+        }
     }
 
 
@@ -279,6 +318,11 @@ public class MecanumDrive {
         }
         if (endStopped) {
             smTickUntilAllDone();
+            for (HPMC motor: motors) {
+                if (motor.power != 0) {
+                    motor.setPower(0);
+                }
+            }
         } else {
             smTickUntilAnyDone();
         }
@@ -293,9 +337,9 @@ public class MecanumDrive {
         for (HPMC motor: motors) {
             int slop = (int) motor.distanceLeft();
             slopTotal += Math.abs(slop);
-            slopString += " " + slop;
+            slopString += String.format("%5s", slop);
         }
-        System.out.println("Slop "+ what + ": " + slopString + " Total: " +  slopTotal);
+        System.out.println(String.format("Slop %10s: %s Total: %d", what , slopString , slopTotal));
     }
 
     void smTickUntilAllDone() {
@@ -347,6 +391,8 @@ public class MecanumDrive {
 
         }
     }
+
+
     void arcMove( double radius, double degrees, double speed, MoveDirection direction, boolean pivotFront,  boolean endStopped) {
         //wheels a b c and d.
         final double wheelSpacingFrontToBack = 10;
@@ -427,6 +473,193 @@ public class MecanumDrive {
         smTickUntilAllDone();
     }
 
+
+
+    void arcMoveIMU( double radius, double degrees, double speed, MoveDirection direction, boolean pivotFront,  boolean endStopped) {
+        //wheels a b c and d.
+        final double wheelSpacingFrontToBack = 10;
+        final double wheelSpacingSideToSide = 14;
+        double a = 0;  //the wheel closest to the center of the ark
+        double b = 0;  //the wheel opposite a
+        double c = 0;  //the wheel diagnally oppostie a
+        double d = 0;  //the wheel in line with a (on the same side)
+        double[] distances = new double[4];
+        double[] speeds = new double[4];
+
+        a=radius;
+        b=radius+wheelSpacingSideToSide;
+
+        c=Math.hypot(radius+wheelSpacingSideToSide, wheelSpacingFrontToBack);
+        double cAngle = Math.atan2(wheelSpacingFrontToBack, wheelSpacingSideToSide + radius);
+        //adjust the distance to travel for the front wheel based on the angle of their travel
+        double ratio = mecanumTravelRatio(cAngle, true);
+        System.out.println(String.format( "Distance for C %.1f, Angle %.1f Ratio %.1f  Computed Distance: %.1f",c, Math.toDegrees(cAngle),ratio , c*ratio ));
+
+        c = c * mecanumTravelRatio(cAngle, true);
+        d=Math.hypot(radius, wheelSpacingFrontToBack);
+        double dAngle =  Math.atan2(wheelSpacingFrontToBack,  radius);
+        ratio = mecanumTravelRatio(dAngle, false);
+        System.out.println(String.format( "Distance for D %.1f, Angle %.1f Ratio %.1f  Computed Distance: %.1f",d, Math.toDegrees(dAngle),ratio , d*ratio ));
+
+        d = d * mecanumTravelRatio(Math.atan2(wheelSpacingFrontToBack, radius), false);
+
+
+
+        double arkDistanceMultiplyer = (2 * Math.PI * degrees * COUNT_PER_INCH) / 360;
+        if (pivotFront) {
+            switch (direction) {
+                case LEFT:
+                    distances[FL] = a;
+                    distances[FR] = b;
+                    distances[BL] = d;
+                    distances[BR] = c;
+                    break;
+                case RIGHT:
+                    distances[FL] = b;
+                    distances[FR] = a;
+                    distances[BL] = c;
+                    distances[BR] = d;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Have to turn left or right");
+            }
+        } else {
+            switch (direction) {
+                case LEFT:
+                    distances[FL] = d;
+                    distances[FR] = c;
+                    distances[BL] = a;
+                    distances[BR] = b;
+                    break;
+                case RIGHT:
+                    distances[FL] = c;
+                    distances[FR] = d;
+                    distances[BL] = b;
+                    distances[BR] = a;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Have to turn left or right");
+            }
+        }
+
+        for (int i  = 0 ; i < 4; i++) {
+            speeds[i] =  speed * distances[i] / c;
+            debug(String.format("Motor Speed: %d, %.1f", i, speeds[i]));
+        }
+
+
+        for (int i  = 0 ; i < 4; i++) {
+            motors[i].setPowerSmart(speeds[i]);
+        }
+        setTurnStart();
+        if (direction == MoveDirection.LEFT) {
+            degrees = -degrees;
+        }
+        Orientation lastOrientation = getOrientation();
+        int slowdownTicks = 12;
+        double biggestTickChange = 0;
+        boolean timeToSlowDown = false;
+        while (opMode.opModeIsActive() && !timeToSlowDown) {
+            Orientation currentOrientation = getOrientation();
+            double lastTickChange = Math.abs(angleDifference(currentOrientation, lastOrientation));
+            if (lastTickChange > biggestTickChange ) {
+                biggestTickChange = lastTickChange;
+            }
+            lastOrientation = currentOrientation;
+            debug(String.format("Arcmoving %.1f  BTC%.4f" , turnedDegreesLeft(degrees), biggestTickChange));
+
+            if ( Math.abs(turnedDegreesLeft(degrees)) < (biggestTickChange * slowdownTicks / 2.2 ) ) {
+                timeToSlowDown = true;
+            }
+            for (int i=0; i < slowdownTicks; i++) {
+                for (HPMC motor : motors) {
+                    motor.updateCurrentVelocity();
+                    motor.autoAdjust();
+                }
+            }
+            tickSleep();
+        }
+        for (int i=0; i < slowdownTicks; i++) {
+            int ticksLeft = slowdownTicks - (i+1);
+            if (ticksLeft < 2) {ticksLeft = 2;}
+            double desiredAngularSpeed =turnedDegreesLeft(degrees) / ticksLeft * 1.5;
+            double percentSpeed = desiredAngularSpeed / biggestTickChange;
+            if (percentSpeed > 1) { percentSpeed =1;}
+            if (percentSpeed < -1) { percentSpeed =-1;}
+
+            String debugInfo = "";
+
+            for (int j=0; j<4; j++) {
+                motors[j].setPowerSmart(speeds[j]*percentSpeed);
+                debugInfo += String.format("M:%d-%.1f-P%.1f" , j, speeds[j] * percentSpeed, motors[j].power);
+            }
+            debug( String.format("Slowing: (DL:%.1f) (TL:%d) (DAS:%.1f) %s" , turnedDegreesLeft(degrees),  ticksLeft, desiredAngularSpeed, debugInfo));
+
+            tickSleep();
+            if (!opMode.opModeIsActive() ) {
+                break;
+            }
+        }
+    }
+
+    void debug(String string) {
+        System.out.println("MCC: " + string) ;
+    }
+
+    Orientation getOrientation() {
+        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+    }
+
+    void setTurnStart() {
+        turnStart = getOrientation();
+    }
+
+    double degreesFromStart() {
+        Orientation currentOrientation = getOrientation();
+        return angleDifference( currentOrientation, orientationAtStart);
+    }
+
+    void turnTo(double degreesFromStart, double powerIn) {
+        Orientation currentOrientation = getOrientation();
+        double turnTo = orientationAtStart.firstAngle + degreesFromStart;
+        double diff = deltaAngle(currentOrientation.firstAngle, turnTo);
+        if (diff < 0) {
+            leftTurn(Math.abs(diff), powerIn);
+        } else {
+            rightTurn(diff, powerIn);
+        }
+
+    }
+
+
+
+    double turnedDegreesLeft(double degrees) {
+        if (degrees < 0) {
+            return getTurnedAngle() - degrees;
+        } else {
+            return degrees - getTurnedAngle();
+        }
+    }
+
+    double angleDifference(Orientation o1, Orientation o2) {
+        return deltaAngle( o1.firstAngle, o2.firstAngle);
+    }
+
+    double deltaAngle(double a1, double a2) {
+        double deltaAngle = a1 - a2;
+        if (deltaAngle < -180)
+            deltaAngle += 360;
+        else if (deltaAngle > 180)
+            deltaAngle -= 360;
+        return deltaAngle;
+    }
+
+    double getTurnedAngle() {
+        Orientation currentOrientation = getOrientation();
+        return angleDifference(turnStart, currentOrientation);
+    }
+
+
     void smTickUntilAnyDone() {
         boolean done = false;
         tickSetup();
@@ -446,6 +679,40 @@ public class MecanumDrive {
         }
     }
 
+    public void loadIMUCalibration(String filename) {
+        BNO055IMU.CalibrationData calibrationData = null;
+        if (filename == null) {
+            filename = "AdafruitIMUCalibration.json";
+        }
+        try {
+            File file = AppUtil.getInstance().getSettingsFile(filename);
 
+            FileInputStream fisProd = new FileInputStream(file);
+            ObjectInputStream oisProd = new ObjectInputStream(fisProd);
+            calibrationData = (BNO055IMU.CalibrationData ) oisProd.readObject();
+            fisProd.close();
+            imu.writeCalibrationData(calibrationData);
+        } catch (IOException ioe) {
+            System.out.println("Error de IO: " + ioe.getMessage());
+        } catch (ClassNotFoundException cnfe) {
+            System.out.println("Error de clase no encontrada: " + cnfe.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
 
+    }
+    void tankTurnStart (MoveDirection side, double power) {
+        if (side == MoveDirection.LEFT) {
+            motors[FL].setPowerSmart(power);
+            motors[BL].setPowerSmart(power);
+        }else {
+            motors[FR].setPowerSmart(power);
+            motors[BR].setPowerSmart(power);
+        }
+    }
+    void stop () {
+        for (HPMC motor: motors) {
+            motor.setPower(0);
+        }
+    }
 }

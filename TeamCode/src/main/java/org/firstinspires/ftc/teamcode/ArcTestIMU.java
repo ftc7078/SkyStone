@@ -36,7 +36,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 public class ArcTestIMU extends LinearOpMode {
 
-    private MecanumDriveIMU mecanumDrive = new MecanumDriveIMU();
+    private MecanumDrive mecanumDrive = new MecanumDrive();
     private AtlasRobot robot = new AtlasRobot();
 
     @Override
@@ -60,7 +60,7 @@ public class ArcTestIMU extends LinearOpMode {
         waitForStart();
 
         //mecanumDrive.backward(4, 0.5);
-        mecanumDrive.arcMove( 2, 90, .8, MecanumDriveIMU.MoveDirection.RIGHT, false, true);
+        mecanumDrive.arcMove( 2, 90, .8, MecanumDrive.MoveDirection.RIGHT, false, true);
         //mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, false, true);
         //mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.RIGHT, true, true);
        // mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, true, true);

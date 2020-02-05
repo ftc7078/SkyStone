@@ -1,12 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 
@@ -14,7 +10,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 public class IMUTest2 extends LinearOpMode
 {
-    private MecanumDriveIMU mecanumDrive = new MecanumDriveIMU();
+    private MecanumDrive mecanumDrive = new MecanumDrive();
     private AtlasRobot robot = new AtlasRobot();
 
     @Override
@@ -25,7 +21,7 @@ public class IMUTest2 extends LinearOpMode
 
 
 
-        while (!mecanumDrive.isReady()) {
+        while (!mecanumDrive.isReady() && opModeIsActive() ) {
             telemetry.addData("Status", "initializing");
             telemetry.update();
             sleep(50);
@@ -50,11 +46,7 @@ public class IMUTest2 extends LinearOpMode
 
 
 
-            if (diff < 0) {
-                mecanumDrive.leftTurn(Math.abs(diff), .5);
-            } else {
-                mecanumDrive.rightTurn(diff, 0.5);
-            }
+            mecanumDrive.turnTo(45, 0.5);
             sleep(2000);
 
 

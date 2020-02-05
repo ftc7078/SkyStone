@@ -73,7 +73,6 @@ public class MTest2IMU extends LinearOpMode {
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
-        Servo capstone = hardwareMap.get(Servo.class, "capstone");
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -81,46 +80,40 @@ public class MTest2IMU extends LinearOpMode {
 
         waitForStart();
 
-        /*
-        capstone.setPosition(1);
-        sleep(1000);
-        capstone.setPosition(0);
-        sleep(1000);
-        capstone.setPosition(1);
-        */
+
 
 
         mecanumDrive.forward(48, 0.7);
         pause();
-        mecanumDrive.rightTurn(90, 0.5);
+        mecanumDrive.turnTo(-90, 0.5);
         pause();
         mecanumDrive.forward(24, 0.5);
         pause();
-        mecanumDrive.rightTurn(90, 0.5);
+        mecanumDrive.turnTo(180, 0.5);
         pause();
         mecanumDrive.forward(48, 0.7);
         pause();
 
-        mecanumDrive.leftTurn(180, 0.7);
+        mecanumDrive.turnTo(0, 0.7);
         pause();
 
         mecanumDrive.forward(48, 0.7);
         pause();
 
-        mecanumDrive.leftTurn(265, 0.6);
+        mecanumDrive.turnTo(-90, 0.6);
         pause();
 
         mecanumDrive.backward(24, 0.5);
         pause();
 
-        mecanumDrive.rightTurn(90, 0.5);
+        mecanumDrive.turnTo(180, 0.5);
         pause();
 
         mecanumDrive.forward(48, 0.7);
 
         pause();
 
-        mecanumDrive.leftTurn(180, 0.7);
+        mecanumDrive.turnTo(0, 0.7);
 
 
         status( "Done");
