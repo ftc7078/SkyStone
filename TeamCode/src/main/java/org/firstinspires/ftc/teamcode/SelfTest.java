@@ -72,10 +72,10 @@ public class SelfTest extends LinearOpMode {
         motors[BR] = new HPMC(hardwareMap, "right_back", MOTOR_SPEED);
 
         // Set Power Levels to zero
-        motors[FL].setPower(0);
-        motors[BL].setPower(0);
-        motors[FR].setPower(0);
-        motors[BR].setPower(0);
+        motors[FL].setPowerManual(0);
+        motors[BL].setPowerManual(0);
+        motors[FR].setPowerManual(0);
+        motors[BR].setPowerManual(0);
 
         motors[FL].setLabel("FL");
         motors[BL].setLabel("BL");
@@ -172,7 +172,7 @@ public class SelfTest extends LinearOpMode {
             }
         }
         for (int i = 0; i<4; i++) {
-            motors[i].setPower(power[i]);
+            motors[i].setPowerManual(power[i]);
         }
         telemetry.addData("Motors", "lf (%.2f), rf (%.2f), lb (%.2f), rb (%.2f)", power[FL], power[FR], power[BL], power[BR]);
 
@@ -200,7 +200,6 @@ public class SelfTest extends LinearOpMode {
                         notDone = true;
                     }
                 }
-                motors[FR].tickSleep();
 
             }
             /*

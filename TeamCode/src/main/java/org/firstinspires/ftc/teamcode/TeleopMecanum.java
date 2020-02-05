@@ -58,13 +58,13 @@ public class TeleopMecanum extends LinearOpMode {
             gamepad1.setJoystickDeadzone((float)0.2);
             double speed = 1;
 
-             speed = (gamepad1.right_trigger * 0.7) + 0.3;
+             speed = (gamepad1.right_trigger * 0.6) + 0.4;
             double fwd = gamepad1.left_stick_y;
             double strafe = gamepad1.left_stick_x;
             double rot= gamepad1.right_stick_x;
 
             fwd = fwd * speed;
-            strafe =strafe * speed * 2;
+            strafe =strafe * speed * 1.6;
             if (strafe > 1) {
                 strafe = 1;
             } else if (strafe < -1) {

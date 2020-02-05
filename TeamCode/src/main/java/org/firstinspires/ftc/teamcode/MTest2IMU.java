@@ -86,35 +86,52 @@ public class MTest2IMU extends LinearOpMode {
         mecanumDrive.forward(48, 0.7);
         pause();
         mecanumDrive.turnTo(-90, 0.5);
-        pause();
+        //pause();
         mecanumDrive.forward(24, 0.5);
         pause();
         mecanumDrive.turnTo(180, 0.5);
-        pause();
+        //pause();
         mecanumDrive.forward(48, 0.7);
         pause();
 
         mecanumDrive.turnTo(0, 0.7);
-        pause();
+        //pause();
+
+
+
 
         mecanumDrive.forward(48, 0.7);
         pause();
 
         mecanumDrive.turnTo(-90, 0.6);
-        pause();
+        //pause();
+
+
 
         mecanumDrive.backward(24, 0.5);
         pause();
 
         mecanumDrive.turnTo(180, 0.5);
-        pause();
+        //pause();
 
         mecanumDrive.forward(48, 0.7);
 
         pause();
 
         mecanumDrive.turnTo(0, 0.7);
+        //pause();
 
+
+
+        mecanumDrive.rightStrafe( 24, 0.8);
+        pause();
+
+        mecanumDrive.leftStrafe(24, 0.8);
+        pause();
+
+
+        mecanumDrive.turnTo(0, 0.2);
+        pause();
 
         status( "Done");
 

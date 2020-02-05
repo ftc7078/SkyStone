@@ -52,7 +52,7 @@ public class MecanumDriveNoIMU {
 
         // Set Power Levels to zero
         for (HPMC motor : motors) {
-            motor.setPower(0);
+            motor.setPowerManual(0);
             motor.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motor.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motor.setTickTime(tickTime);
@@ -172,7 +172,7 @@ public class MecanumDriveNoIMU {
         power[BR] = newY - rot;
         for (int i = 0; i < 4; i++) {
             power[i] = power[i]*slowdownFactor;
-            motors[i].setPower(power[i]);
+            motors[i].setPowerManual(power[i]);
         }
 
         telemetry.addData("Motors", "lf (%.2f), rf (%.2f), lb (%.2f), rb (%.2f)", power[FL], power[FR], power[BL], power[BR]);

@@ -6,7 +6,6 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -21,6 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 import static java.lang.Math.sqrt;
+import static java.lang.Thread.sleep;
 
 public class MecanumDrive {
     private Telemetry telemetry;
@@ -39,6 +39,7 @@ public class MecanumDrive {
 
     private HPMC[] motors = new HPMC[4];
     private double[] power = new double[4];
+    private long[] startingPositions = new long[4];
     private final double MOTOR_SPEED = 2800;
     private final long COUNT_PER_INCH = 40;
     private final long COUNT_PER_INCH_STRAFING = 60;
@@ -69,7 +70,7 @@ public class MecanumDrive {
 
         // Set Power Levels to zero
         for (HPMC motor : motors) {
-            motor.setPower(0);
+            motor.setPowerManual(0);
             motor.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motor.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             motor.setTickTime(tickTime);
@@ -111,6 +112,12 @@ public class MecanumDrive {
         }
     }
 
+    void waitForIMUReady() {
+        while(!opMode.isStopRequested() && !isReady()) {
+            opMode.sleep(10);
+        }
+    }
+
 
     void setupTickCallback( TickCallback callbackSet) {
         callback = callbackSet;
@@ -136,12 +143,11 @@ public class MecanumDrive {
             return;
         }
         long sleepTime = (int) Math.floor((nextWake - now) / 1000000);
-        if (true) {//for debugging
-            System.out.println("Sleeping: " + sleepTime);
-        }
+        //System.out.println("Sleeping: " + sleepTime);
+
 
         try {
-            Thread.sleep(sleepTime);
+            sleep(sleepTime);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -211,7 +217,9 @@ public class MecanumDrive {
         power[BR] = newY - rot;
         for (int i = 0; i < 4; i++) {
             power[i] = power[i]*slowdownFactor;
-            motors[i].setPower(power[i]);
+            //motors[i].setPowerAuto(power[i]);
+            motors[i].setPowerManual(power[i]);
+
         }
 
         telemetry.addData("Motors", "lf (%.2f), rf (%.2f), lb (%.2f), rb (%.2f)", power[FL], power[FR], power[BL], power[BR]);
@@ -245,6 +253,7 @@ public class MecanumDrive {
     }
 
     void turn(double degrees, double power, MoveDirection direction) {
+        if (!opMode.opModeIsActive()) {return;}
         long distance = (long) (degrees * COUNT_PER_DEGREE);
         HPMC.Direction FL_Direction = HPMC.Direction.FORWARD;
         HPMC.Direction FR_Direction = HPMC.Direction.FORWARD;
@@ -282,6 +291,7 @@ public class MecanumDrive {
     }
 
     void move(double inches, double power, MoveDirection direction, boolean endStopped) {
+        if (!opMode.opModeIsActive()) {return;}
         long distance = 0;
         if (inches < 0) {
             inches = Math.abs(inches);
@@ -320,7 +330,7 @@ public class MecanumDrive {
             smTickUntilAllDone();
             for (HPMC motor: motors) {
                 if (motor.power != 0) {
-                    motor.setPower(0);
+                    motor.setPowerManual(0);
                 }
             }
         } else {
@@ -330,6 +340,28 @@ public class MecanumDrive {
 
     }
 
+    void diagonal (double inches, double power, MoveDirection leftRight, boolean endStopped) {
+        long distance = (long) (inches * COUNT_PER_INCH * 1.4);
+
+        if (leftRight == MoveDirection.LEFT) {
+            motors[FL].smoothMoveSetup(distance, power, 4, 4, HPMC.Direction.FORWARD, true);
+            motors[BR].smoothMoveSetup(distance, power, 4, 4, HPMC.Direction.FORWARD, true);
+
+            motors[FR].smoothMoveSetup(0,power,0,0, HPMC.Direction.FORWARD, true);
+            motors[BL].smoothMoveSetup(0,power,0,0, HPMC.Direction.FORWARD, true);
+
+        } else {
+            motors[FR].smoothMoveSetup(distance, power, 4, 4, HPMC.Direction.FORWARD, true);
+            motors[BL].smoothMoveSetup(distance, power, 4, 4, HPMC.Direction.FORWARD, true);
+
+            motors[FL].smoothMoveSetup(0,power,0,0, HPMC.Direction.FORWARD, true);
+            motors[BR].smoothMoveSetup(0,power,0,0, HPMC.Direction.FORWARD, true);
+
+        }
+        smTickUntilAllDone();
+        logSlop("diagonal " + inches);
+
+    }
 
     void logSlop(String what) {
         int slopTotal = 0;
@@ -354,12 +386,15 @@ public class MecanumDrive {
             status = status + " | BL: " + motors[BL].getMoveState();
             status = status + " | BR: " + motors[BR].getMoveState();
             System.out.println("Ticking Status" + status);
-
-
+            double completedSum = 0;
+            for (HPMC motor : motors) {
+                motor.updateCurrentVelocity();
+            }
+            double averageCompleted = calculateAverageCompleted();
             for (HPMC motor : motors) {
                 //smTick returns true if we are done, false if we need to keep going
                 //Keep going if any motor is not done
-                if (motor.smTick()) {
+                if (motor.smTick( averageCompleted) ) {
                     //System.out.println(String.format("Motor: %s not done", motor.label));
                     done = false;
                 } else {
@@ -376,6 +411,25 @@ public class MecanumDrive {
             motor.updateCurrentVelocity();
         }
         tickSleep();
+        for (HPMC motor : motors) {
+            motor.updateCurrentVelocity();
+        }
+    }
+
+    double calculateAverageCompleted() {
+        long totalToMove = 0;
+        long totalMoved = 0;
+        for (HPMC motor : motors) {
+             if (motor.smState != HPMC.MoveState.DONE) {
+                 totalMoved += motor.moved();
+                 totalToMove += motor.smDistance;
+             }
+             debug(String.format("Average math: %d %d" , motor.moved(), motor.smDistance));
+        }
+
+        double averageCompleted = totalMoved / (double) totalToMove;
+        debug(String.format("Average percent done: %.1f", averageCompleted*100));
+        return averageCompleted;
     }
 
     double mecanumTravelRatio(double angle, boolean towardsPerpendicular) {
@@ -395,6 +449,7 @@ public class MecanumDrive {
 
     void arcMove( double radius, double degrees, double speed, MoveDirection direction, boolean pivotFront,  boolean endStopped) {
         //wheels a b c and d.
+        if (!opMode.opModeIsActive()) {return;}
         final double wheelSpacingFrontToBack = 10;
         final double wheelSpacingSideToSide = 14;
         double a = 0;  //the wheel closest to the center of the ark
@@ -477,6 +532,7 @@ public class MecanumDrive {
 
     void arcMoveIMU( double radius, double degrees, double speed, MoveDirection direction, boolean pivotFront,  boolean endStopped) {
         //wheels a b c and d.
+        if (!opMode.opModeIsActive()) {return;}
         final double wheelSpacingFrontToBack = 10;
         final double wheelSpacingSideToSide = 14;
         double a = 0;  //the wheel closest to the center of the ark
@@ -549,7 +605,7 @@ public class MecanumDrive {
 
 
         for (int i  = 0 ; i < 4; i++) {
-            motors[i].setPowerSmart(speeds[i]);
+            motors[i].setPowerAuto(speeds[i]);
         }
         setTurnStart();
         if (direction == MoveDirection.LEFT) {
@@ -590,7 +646,7 @@ public class MecanumDrive {
             String debugInfo = "";
 
             for (int j=0; j<4; j++) {
-                motors[j].setPowerSmart(speeds[j]*percentSpeed);
+                motors[j].setPowerAuto(speeds[j]*percentSpeed);
                 debugInfo += String.format("M:%d-%.1f-P%.1f" , j, speeds[j] * percentSpeed, motors[j].power);
             }
             debug( String.format("Slowing: (DL:%.1f) (TL:%d) (DAS:%.1f) %s" , turnedDegreesLeft(degrees),  ticksLeft, desiredAngularSpeed, debugInfo));
@@ -703,16 +759,49 @@ public class MecanumDrive {
     }
     void tankTurnStart (MoveDirection side, double power) {
         if (side == MoveDirection.LEFT) {
-            motors[FL].setPowerSmart(power);
-            motors[BL].setPowerSmart(power);
+            motors[FL].setPowerAuto(power);
+            motors[BL].setPowerAuto(power);
         }else {
-            motors[FR].setPowerSmart(power);
-            motors[BR].setPowerSmart(power);
+            motors[FR].setPowerAuto(power);
+            motors[BR].setPowerAuto(power);
         }
     }
+
+    void runMotors( double frontLeft, double frontRight, double backLeft, double backRight, boolean resetDistance) {
+        double[] speeds = new double[4];
+        speeds[FL] = frontLeft;
+        speeds[FR] = frontRight;
+        speeds[BL] = backLeft;
+        speeds[BR] = backRight;
+        for (int i = 0; i<4; i++) {
+            motors[i].updateCurrentVelocity();
+            motors[i].setPowerManual( speeds[i] ) ;
+            if (resetDistance) {
+                motors[i].updateCurrentVelocity();
+                startingPositions[i] = motors[i].currentPosition;
+            }
+        }
+    }
+
+    long getMovedDistance() {
+        long currentPositions[] = new long[4];
+        long totalDistance = 0;
+        for (int i = 0; i < 4; i++) {
+            motors[i].updateCurrentVelocity();
+            currentPositions[i] = motors[i].currentPosition;
+            totalDistance += Math.abs(currentPositions[i] - startingPositions[1]);
+        }
+        return totalDistance;
+    }
+
+    void runUntilMovedDistance(double distance) {
+
+    }
+
+
     void stop () {
         for (HPMC motor: motors) {
-            motor.setPower(0);
+            motor.setPowerManual(0);
         }
     }
 }
