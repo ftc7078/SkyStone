@@ -91,15 +91,54 @@ public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallba
                 mecanumDrive.backward(22, 1);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN, true);
                 mecanumDrive.arcMove( 8, -90, 1, MecanumDrive.MoveDirection.LEFT, false, true);
+                mecanumDrive.leftStrafe(12,1);
+                sleep(200);
+                mecanumDrive.turnTo(-90,.1);
+                mecanumDrive.backward(84,1);
+                mecanumDrive.turnTo(180,1);
+                mecanumDrive.forward(6,1);
+                robot.foundationMover(false);
+                sleep(2000);
+                mecanumDrive.tankTurnStart(MecanumDrive.MoveDirection.RIGHT, -1);
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
+                while(opModeIsActive() && mecanumDrive.degreesFromStart() < 90 ) {
+                    sleep(50);
+                }
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
+                robot.foundationMover(true);
+                //mecanumDrive.backward(6,1);
+                mecanumDrive.leftStrafe(8, 5);
+                sleep(100);
+                mecanumDrive.turnTo(90,1);
 
                 break;
             case MIDDLE:
+                mecanumDrive.diagonal(8,-.5,MecanumDrive.MoveDirection.RIGHT,true);
+                mecanumDrive.backward(14, 1);
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN, true);
+                mecanumDrive.arcMove( 8, -90, 1, MecanumDrive.MoveDirection.RIGHT, false, true);
+                mecanumDrive.leftStrafe(12,1);
+                mecanumDrive.backward(92,1);
+                mecanumDrive.turnTo(180,1);
+                mecanumDrive.forward(6,1);
+                robot.foundationMover(false);
+                sleep(2000);
+                mecanumDrive.tankTurnStart(MecanumDrive.MoveDirection.RIGHT, -1);
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
+                while(opModeIsActive() && mecanumDrive.degreesFromStart() < 90 ) {
+                    sleep(50);
+                }
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
+                robot.foundationMover(true);
+                //mecanumDrive.backward(6,1);
+                mecanumDrive.leftStrafe(8, 5);
+                sleep(100);
+                mecanumDrive.turnTo(90,1);
 
                 break;
             case LEFT:
 
                 break;
-
         }
 
     }
