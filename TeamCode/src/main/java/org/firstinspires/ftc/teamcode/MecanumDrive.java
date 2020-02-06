@@ -679,10 +679,19 @@ public class MecanumDrive {
         Orientation currentOrientation = getOrientation();
         double turnTo = orientationAtStart.firstAngle + degreesFromStart;
         double diff = deltaAngle(currentOrientation.firstAngle, turnTo);
-        if (diff < 0) {
-            leftTurn(Math.abs(diff), powerIn);
+        double angle = Math.abs(diff);
+        diff = Math.abs(diff);
+        //compensate for overshoot.
+        if (diff < 10) {
+            diff = diff / 2;
         } else {
-            rightTurn(diff, powerIn);
+            diff = diff - 5;
+        }
+
+        if (diff < 0) {
+            leftTurn(Math.abs(angle), powerIn);
+        } else {
+            rightTurn(angle, powerIn);
         }
 
     }
@@ -798,6 +807,9 @@ public class MecanumDrive {
 
     }
 
+    void autoSteer(double degreesFromStart, double distanceToEnd)  {
+
+    }
 
     void stop () {
         for (HPMC motor: motors) {
