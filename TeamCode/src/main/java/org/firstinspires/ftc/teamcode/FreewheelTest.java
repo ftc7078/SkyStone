@@ -32,9 +32,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Arc Test IMU", group ="Tests")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Freewheel Test", group ="Tests")
 
-public class ArcTestIMU extends LinearOpMode {
+public class FreewheelTest extends LinearOpMode {
 
     private MecanumDrive mecanumDrive = new MecanumDrive();
     private AtlasRobot robot = new AtlasRobot();
@@ -46,7 +46,7 @@ public class ArcTestIMU extends LinearOpMode {
         robot.init(hardwareMap, telemetry, this);
 
 
-        while (!mecanumDrive.isReady()) {
+        while (!mecanumDrive.isReady() && !isStopRequested()) {
             telemetry.addData("Status" , "IMU Initializing");
             telemetry.update();
             sleep(50);
@@ -59,17 +59,35 @@ public class ArcTestIMU extends LinearOpMode {
         }
         waitForStart();
 
-        //mecanumDrive.backward(4, 0.5);
-        mecanumDrive.arcMove( 2, 90, .8, MecanumDrive.MoveDirection.RIGHT, false, true);
-        //mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, false, true);
-        //mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.RIGHT, true, true);
-       // mecanumDrive.arcMove( 2, 180, .8, MecanumDrive.MoveDirection.LEFT, true, true);
+        //Start
 
 
+        mecanumDrive.runMotors(0.6,.6,.6, .6, true);
+        double distance = 0;
+        while (distance  < 10  && opModeIsActive()) {
+            distance = mecanumDrive.getMovedDistanceInches();
+            System.out.println(String.format("Running for %.2f of 10 inches", distance));
+        }
 
-        //mecanumDrive.arcMove( 1, 90, .5, MecanumDrive.MoveDirection.LEFT, false, true);
+        distance = 0;
+        mecanumDrive.runMotors(0.9,.0,.0,.9, true);
+        while (distance  < 10  && opModeIsActive()) {
+            distance = mecanumDrive.getMovedDistanceInches();
+            System.out.println(String.format("Running for %.2f of 10 inches", distance));
+        }
 
+        mecanumDrive.arcMove(2, 70, .6,  MecanumDrive.MoveDirection.LEFT, true, false );
 
+        //mecanumDrive.freeWheel(-1,1,1,-1,20);
+        mecanumDrive.move(16, 1, MecanumDrive.MoveDirection.LEFT, false);
+        mecanumDrive.stop();
+
+        sleep(200);
+
+        mecanumDrive.turnTo(90, 0.5);
+        mecanumDrive.stop();
+
+        //End
 
 
         status( "Done");

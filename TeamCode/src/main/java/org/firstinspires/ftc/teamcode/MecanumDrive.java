@@ -98,14 +98,15 @@ public class MecanumDrive {
         imu.initialize(parameters);
         loadIMUCalibration("AdafruitIMUCalibration.json");
         orientationAtStart = getOrientation();
+        orientationAtStart.firstAngle=0;
 
 
     }
 
 
     boolean isReady() {
-        if ( imu.isGyroCalibrated() ) {
-            orientationAtStart = getOrientation();
+        if ( imu.isGyroCalibrated() || opMode.isStopRequested() ) {
+            //orientationAtStart = getOrientation();
             return true;
         } else {
             return false;
@@ -336,11 +337,15 @@ public class MecanumDrive {
         } else {
             smTickUntilAnyDone();
         }
-        logSlop("move " + inches);
+        logSlop("move " + inches + "" + direction);
 
     }
 
     void diagonal (double inches, double power, MoveDirection leftRight, boolean endStopped) {
+        if ((inches < 0) || (power < 0)) {
+            inches = 0 - Math.abs(inches);
+            power = Math.abs(power);
+        }
         long distance = (long) (inches * COUNT_PER_INCH * 1.4);
 
         if (leftRight == MoveDirection.LEFT) {
@@ -372,6 +377,35 @@ public class MecanumDrive {
             slopString += String.format("%5s", slop);
         }
         System.out.println(String.format("Slop %10s: %s Total: %d", what , slopString , slopTotal));
+    }
+
+    void smTickUntilAnyDone() {
+        boolean done = false;
+        tickSetup();
+        while (!done && opMode.opModeIsActive()) {
+            String status = "";
+            status = status + " | FL: " + motors[FL].getMoveState();
+            status = status + " | FR: " + motors[FR].getMoveState();
+            status = status + " | BL: " + motors[BL].getMoveState();
+            status = status + " | BR: " + motors[BR].getMoveState();
+            System.out.println("Ticking Status" + status);
+            double completedSum = 0;
+            for (HPMC motor : motors) {
+                motor.updateCurrentVelocity();
+            }
+
+            double averageCompleted = calculateAverageCompleted();
+            done = false;
+            for (HPMC motor : motors) {
+                //smTick returns true if we are done, false if we need to keep going
+                //Keep going if any motor is not done
+                if (!motor.smTick( averageCompleted) ) {
+                    //System.out.println(String.format("Motor: %s not done", motor.label));
+                    done = true;
+                }
+            }
+
+        }
     }
 
     void smTickUntilAllDone() {
@@ -677,22 +711,50 @@ public class MecanumDrive {
 
     void turnTo(double degreesFromStart, double powerIn) {
         Orientation currentOrientation = getOrientation();
+
+        System.out.println(String.format("Turning to: %.1f from: %.1f", degreesFromStart, currentOrientation.firstAngle));
+
+
+        Orientation turnStart = currentOrientation;
+
+
         double turnTo = orientationAtStart.firstAngle + degreesFromStart;
+
         double diff = deltaAngle(currentOrientation.firstAngle, turnTo);
+        //System.out.println(String.format("Turning from a: %.2f to b:%.2f diff:%.2f", currentOrientation.firstAngle, turnTo, diff));
+
         double angle = Math.abs(diff);
-        diff = Math.abs(diff);
-        //compensate for overshoot.
-        if (diff < 10) {
-            diff = diff / 2;
-        } else {
-            diff = diff - 5;
+        angle = Math.abs(diff);
+
+        double distance=0;
+        if (angle < 15) {
+            distance = 0.225*angle;
+            System.out.println(String.format("Turning to: %.1f  from: %.1f Distance %.3f", degreesFromStart, currentOrientation.firstAngle,  distance * COUNT_PER_INCH));
+
         }
 
+        double minSpeed= 0.2;
         if (diff < 0) {
-            leftTurn(Math.abs(angle), powerIn);
+            if (angle < 15) {
+                freeWheel(-minSpeed,minSpeed,-minSpeed,minSpeed, distance);
+                stop();
+            } else {
+                leftTurn(Math.abs(angle), powerIn);
+            }
         } else {
-            rightTurn(angle, powerIn);
+            if (angle < 15) {
+                freeWheel(minSpeed,-minSpeed,minSpeed,-minSpeed, distance);
+                stop();
+
+            } else {
+                rightTurn(angle, powerIn);
+            }
         }
+        currentOrientation = getOrientation();
+        double endDiff = deltaAngle(currentOrientation.firstAngle, turnTo);
+        double actualTurned = deltaAngle(turnStart.firstAngle, currentOrientation.firstAngle);
+        System.out.println(String.format("Turning:  Tried to turn: %.1f  Turned: %.1f  Difference: %.1f",
+                diff, actualTurned, endDiff));
 
     }
 
@@ -713,9 +775,9 @@ public class MecanumDrive {
     double deltaAngle(double a1, double a2) {
         double deltaAngle = a1 - a2;
         if (deltaAngle < -180)
-            deltaAngle += 360;
+            deltaAngle += 360.0;
         else if (deltaAngle > 180)
-            deltaAngle -= 360;
+            deltaAngle -= 360.0;
         return deltaAngle;
     }
 
@@ -725,24 +787,7 @@ public class MecanumDrive {
     }
 
 
-    void smTickUntilAnyDone() {
-        boolean done = false;
-        tickSetup();
-        while (!done && opMode.opModeIsActive()) {
-            done = false;
-            for (HPMC motor : motors) {
-                if (!motor.smTick()) {
-                    done = true;
-                } else {
-                    //System.out.println(String.format("Motor: %s done", motor.label));
-                }
-            }
-            System.out.println("Any Done: " + done);
-            if (!done) {
-                tickSleep();
-            }
-        }
-    }
+
 
     public void loadIMUCalibration(String filename) {
         BNO055IMU.CalibrationData calibrationData = null;
@@ -776,39 +821,47 @@ public class MecanumDrive {
         }
     }
 
-    void runMotors( double frontLeft, double frontRight, double backLeft, double backRight, boolean resetDistance) {
+    void runMotors( double frontLeft, double frontRight, double backLeft, double backRight, boolean resetStartingPoint) {
         double[] speeds = new double[4];
         speeds[FL] = frontLeft;
         speeds[FR] = frontRight;
         speeds[BL] = backLeft;
         speeds[BR] = backRight;
         for (int i = 0; i<4; i++) {
-            motors[i].updateCurrentVelocity();
             motors[i].setPowerManual( speeds[i] ) ;
-            if (resetDistance) {
+            if (resetStartingPoint) {
                 motors[i].updateCurrentVelocity();
                 startingPositions[i] = motors[i].currentPosition;
             }
         }
     }
 
-    long getMovedDistance() {
+    long getMovedDistanceCounts() {
         long currentPositions[] = new long[4];
         long totalDistance = 0;
         for (int i = 0; i < 4; i++) {
             motors[i].updateCurrentVelocity();
             currentPositions[i] = motors[i].currentPosition;
-            totalDistance += Math.abs(currentPositions[i] - startingPositions[1]);
+            totalDistance += Math.abs(currentPositions[i] - startingPositions[i]);
         }
         return totalDistance;
     }
 
-    void runUntilMovedDistance(double distance) {
+    double getMovedDistanceInches() {
+        return (getMovedDistanceCounts() / 4.0 / (double) COUNT_PER_INCH);
+    }
 
+    void freeWheel( double frontLeft, double frontRight, double backLeft, double backRight, double distanceToMove) {
+        double distanceMoved = 0;
+        runMotors(frontLeft,frontRight,backLeft,backRight, true);
+        while (distanceMoved  < distanceToMove  && opMode.opModeIsActive()) {
+            distanceMoved = getMovedDistanceInches();
+            System.out.println(String.format("Running for %.3f of %.3f inches", distanceMoved, distanceToMove));
+        }
     }
 
     void autoSteer(double degreesFromStart, double distanceToEnd)  {
-
+        //todo
     }
 
     void stop () {

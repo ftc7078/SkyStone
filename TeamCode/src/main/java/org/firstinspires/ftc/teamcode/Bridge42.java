@@ -32,27 +32,25 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="24 Bridge", group ="Concept")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Bridge 42", group ="Concept")
 
-public class BlueBridge extends LinearOpMode {
+public class Bridge42 extends LinearOpMode {
+
 
     private MecanumDrive mecanumDrive = new MecanumDrive();
-    private AtlasRobot robot = new AtlasRobot();
+
 
     @Override public void runOpMode() {
 
-
         mecanumDrive.init(hardwareMap, telemetry, this);
-        robot.init(hardwareMap, telemetry, this);
 
-        // Tell the driver that initialization is complete.
+
         telemetry.addData("Status", "Initialized");
 
-        // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
-sleep(24000);
-        mecanumDrive.forward(24, .5);
+sleep(26000);
+        mecanumDrive.forward(42, .5);
 sleep(1500);
     }
 }

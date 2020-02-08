@@ -37,7 +37,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Mecanum Test 2 w IMU", group ="Tests")
 
-public class MTest2IMU extends LinearOpMode {
+public class MecanumTest2IMU extends LinearOpMode {
 
 
     private ElapsedTime runtime = new ElapsedTime();
@@ -118,7 +118,7 @@ public class MTest2IMU extends LinearOpMode {
 
         pause();
 
-        mecanumDrive.turnTo(0, 0.7);
+        mecanumDrive.turnTo(0, 0.5);
         //pause();
 
 
@@ -128,10 +128,10 @@ public class MTest2IMU extends LinearOpMode {
 
         mecanumDrive.leftStrafe(24, 0.8);
         pause();
-
-
-        mecanumDrive.turnTo(0, 0.2);
         pause();
+
+        mecanumDrive.turnTo(0, 0.1);
+
 
         status( "Done");
 

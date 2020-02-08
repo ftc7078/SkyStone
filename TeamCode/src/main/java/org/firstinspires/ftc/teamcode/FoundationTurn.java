@@ -62,18 +62,17 @@ public class FoundationTurn extends LinearOpMode {
         waitForStart();
 
         robot.foundationMover(false);
-        sleep(2000);
-        mecanumDrive.tankTurnStart(MecanumDrive.MoveDirection.RIGHT, -1);
+        sleep(1000);
         robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
-        while(opModeIsActive() && mecanumDrive.degreesFromStart() < 90 ) {
-            sleep(50);
-        }
+        mecanumDrive.freeWheel(-0.1,-1,-0.1,-1,24);
+        mecanumDrive.freeWheel(0.2,-1,0.2,-1,15);
+
         robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
         robot.foundationMover(true);
         //mecanumDrive.backward(6,1);
-        mecanumDrive.leftStrafe(8, 5);
-        sleep(100);
-        mecanumDrive.turnTo(90,1);
+        mecanumDrive.leftStrafe(14, .5);
+        sleep(200);
+        mecanumDrive.turnTo(-90,.05);
         status( "Done");
 
     }

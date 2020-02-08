@@ -52,6 +52,8 @@ public class DiagTest extends LinearOpMode {
 
         waitForStart();
 
+        //mecanumDrive.diagonal(8,-.5,MecanumDrive.MoveDirection.RIGHT,true);
+
         //mecanumDrive.backward(4, 0.5);
         mecanumDrive.diagonal( 18, .5, MecanumDrive.MoveDirection.LEFT, true);
         mecanumDrive.diagonal( 18, .5, MecanumDrive.MoveDirection.RIGHT, true);
