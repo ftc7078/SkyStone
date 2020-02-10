@@ -110,7 +110,6 @@ public class HPMC {
     }
 
     public void updateCurrentVelocity() {
-        currentPosition = motor.getCurrentPosition();
         long nanotime = System.nanoTime();
         //Don't update if it's less than 10 ms since the last update
         if ( (nanotime - lastUpdateTime) <   (10 * MS_PER_NS) ) {
@@ -121,6 +120,7 @@ public class HPMC {
             positionList.clear();
             timeList.clear();
         }
+        currentPosition = motor.getCurrentPosition();
         positionList.add(currentPosition);
         timeList.add(nanotime);
         lastUpdateTime = nanotime;
