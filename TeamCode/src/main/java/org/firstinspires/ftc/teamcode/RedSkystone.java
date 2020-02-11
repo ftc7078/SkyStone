@@ -107,13 +107,13 @@ public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallba
                 moveFoundation();
                 mecanumDrive.leftStrafe(12, .8);
                 sleep(200);
-                mecanumDrive.turnTo(94, .05);
+                mecanumDrive.turnTo(92, .05);
                 mecanumDrive.backward(75,.8);
                 mecanumDrive.turnTo(45,.3);
                 //second sky-stone
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN,true);
                 mecanumDrive.backward(20,.3);
-                mecanumDrive.forward(21,.3);
+                mecanumDrive.forward(20,.3);
                 mecanumDrive.turnTo(90,.3);
                 mecanumDrive.forward(89,1);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
@@ -138,7 +138,7 @@ public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallba
                 moveFoundation();
                 mecanumDrive.leftStrafe(10, .8);
                 sleep(200);
-                mecanumDrive.turnTo(94, .05);
+                mecanumDrive.turnTo(92, .05);
                 mecanumDrive.backward(80,.8);
                 mecanumDrive.turnTo(45,.3);
                 //Second skystone
@@ -155,10 +155,38 @@ public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallba
             case LEFT:
                 mecanumDrive.freeWheel(-0.8,-0.1,-0.8,-0.1,8);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN,true);
-                mecanumDrive.diagonal(48,-1, MecanumDrive.MoveDirection.LEFT, true);
-                mecanumDrive.forward(24,.5,true);
+                mecanumDrive.diagonal(26,-1, MecanumDrive.MoveDirection.LEFT, true);
+                mecanumDrive.freeWheel(-0.5,-0.5,-0.5,-0.5,7);
+                mecanumDrive.forward(12,.3,true);
+                mecanumDrive.turnTo(88,0.3);
+                mecanumDrive.turnTo(90,0.3);
+                mecanumDrive.forward(95,.8,true);
+                mecanumDrive.turnTo(180,.3);
+                mecanumDrive.forward(9,.3);
+                //move foundation
+                moveFoundation();
+                mecanumDrive.leftStrafe(10, .8);
+                sleep(200);
+                mecanumDrive.turnTo(90, .3);
+                mecanumDrive.backward(1,.1);
+                mecanumDrive.turnTo(91,.05);
+                mecanumDrive.backward(90,.8);
+                mecanumDrive.leftStrafe(11,.5);
+                //Second skystone
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN,true);
+                mecanumDrive.backward(8,.3);
+                mecanumDrive.forward(8,.3);
+                mecanumDrive.rightStrafe(11,.5);
                 mecanumDrive.turnTo(90,.3);
-
+                mecanumDrive.forward(1,.1);
+                mecanumDrive.turnTo(90,0.05);
+                mecanumDrive.forward(103,1);
+                robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
+                sleep(1000);
+                //park
+                mecanumDrive.turnTo(90,.3);
+                mecanumDrive.turnTo(91,.05);
+                mecanumDrive.backward(72-24,.8);
                 break;
         }
 
@@ -168,7 +196,7 @@ public class RedSkystone extends LinearOpMode implements MecanumDrive.TickCallba
         sleep(1000);
         robot.setManipulator(AtlasRobot.ManipulatorDirection.IN);
         mecanumDrive.freeWheel(-0.1, -1, -0.1, -1, 24);
-        mecanumDrive.freeWheel(0.2, -1, 0.2, -1, 15);
+        mecanumDrive.freeWheel(0.2, -1, 0.2, -1, 18);
 
         robot.setManipulator(AtlasRobot.ManipulatorDirection.STOP);
         robot.foundationMover(true);
