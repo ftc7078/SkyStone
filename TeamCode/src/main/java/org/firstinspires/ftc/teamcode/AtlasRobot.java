@@ -55,6 +55,7 @@ public class AtlasRobot {
 
         dropCapstone(false);
         foundationMover(true);
+        inRamp.setPosition(0);
 
         digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
