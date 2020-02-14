@@ -73,8 +73,8 @@ public class TeleopMecanum extends LinearOpMode {
             rot = rot * speed;
             mecanumDrive.setMotors(strafe,fwd,rot, 1);
 
-            boolean pull = gamepad2.b;
-            boolean push = gamepad2.x;
+            boolean pull = gamepad2.x;
+            boolean push = gamepad2.b;
 
             robot.capstoneArm(gamepad2.left_bumper);
             if (gamepad2.right_bumper) {

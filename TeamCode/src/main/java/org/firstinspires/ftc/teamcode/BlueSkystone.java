@@ -47,11 +47,12 @@ public class BlueSkystone extends LinearOpMode implements MecanumDrive.TickCallb
         tf = new TensorflowDetector();
         tf.init(hardwareMap, telemetry, this);
 
-        while (!isStarted() ) {
+        while (!isStarted() && !isStopRequested() ) {
             telemetry.addData("path", tf.choosePath());
             telemetry.update();
             sleep(100);
         }
+
 
         mecanumDrive.init(hardwareMap, telemetry, this);
         robot.init(hardwareMap, telemetry, this);
@@ -88,24 +89,26 @@ public class BlueSkystone extends LinearOpMode implements MecanumDrive.TickCallb
     void redScan(RedScan output) {
         switch (output) {
             case RIGHT:
-                mecanumDrive.freeWheel(-0.1,-0.8,-0.1,-0.8,8);
+                mecanumDrive.freeWheel(-0.1,-0.8,-0.1,-0.8,7);
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN,true);
-                mecanumDrive.diagonal(26,-1, MecanumDrive.MoveDirection.RIGHT, true);
+                mecanumDrive.diagonal(25,-1, MecanumDrive.MoveDirection.RIGHT, true);
+                mecanumDrive.turnTo(-60,.5);
+                mecanumDrive.rightStrafe(8,1);
                 mecanumDrive.freeWheel(-0.5,-0.5,-0.5,-0.5,7);
-                mecanumDrive.forward(12,.3,true);
-                mecanumDrive.turnTo(-89,0.3);
-                mecanumDrive.turnTo(-91,0.3);
-                mecanumDrive.forward(95,.8,true);
+                mecanumDrive.forward(14,.3,true);
+                mecanumDrive.turnTo(-85,0.3);
+                mecanumDrive.turnTo(-89,0.05);
+                mecanumDrive.forward(85,.8,true);
                 mecanumDrive.turnTo(180,.3);
-                mecanumDrive.forward(9,.3);
+                mecanumDrive.forward(10,.3);
                 //move foundation
                 moveFoundation();
-                mecanumDrive.rightStrafe(20, .8);
+                mecanumDrive.rightStrafe(14, .8);
                 sleep(200);
                 mecanumDrive.turnTo(-93, .3);
                 mecanumDrive.backward(1,.1);
                 mecanumDrive.turnTo(-89,.05);
-                mecanumDrive.backward(96,.8);
+                mecanumDrive.backward(94,.8);
                 mecanumDrive.rightStrafe(12,.5);
                 //Second skystone
                 robot.setManipulator(AtlasRobot.ManipulatorDirection.IN,true);
